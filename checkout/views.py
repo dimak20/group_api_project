@@ -1,4 +1,3 @@
-from django.core.serializers import get_serializer
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import viewsets, permissions, status
