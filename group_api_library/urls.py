@@ -30,10 +30,10 @@ urlpatterns = [
     #     "api/v1/checkout/",
     #     include("borrowings_service.urls", namespace="borrowings-service")
     # ),
-    # path(
-    #     "api/v1/user/",
-    #     include("users_service.urls", namespace="users-service")
-    # ),
+    path(
+        "api/v1/user/",
+        include("user.urls", namespace="users")
+    ),
     # path(
     #     "api/v1/payments/",
     #     include("payments.urls", namespace="payments-service"),
