@@ -6,7 +6,7 @@ from checkout.models import Checkout
 
 
 class CheckoutSerializer(serializers.ModelSerializer):
-    expected_return = serializers.DateTimeField(required=True)
+    expected_return = serializers.DateField(required=True)
 
     class Meta:
         model = Checkout
