@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from payments.serializers import PaymentSerializer
-from books.serializers import BookSerializer
+
+# from books.serializers import BookSerializer
 from user.serializers import UserSerializer
 from checkout.models import Checkout
 
@@ -69,6 +69,7 @@ class CheckoutDetailSerializer(CheckoutListSerializer):
     payments = serializers.SerializerMethodField()
 
     def get_payments(self, obj):
+        from payments.serializers import PaymentSerializer
         return PaymentSerializer(obj.payments.all(), many=True).data
 
 
