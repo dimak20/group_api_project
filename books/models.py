@@ -19,6 +19,9 @@ class Author(models.Model):
 class Genre(models.Model):
     name = models.CharField(max_length=50)
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         ordering = ["name"]
 
@@ -42,4 +45,4 @@ class Book(models.Model):
     image = models.ImageField(null=True, upload_to=book_image_file_path)
 
     def __str__(self):
-        return {self.title}
+        return self.title
