@@ -2,6 +2,7 @@ from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from telebot.async_telebot import AsyncTeleBot
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from notifications.models import NotificationProfile
 
@@ -10,7 +11,32 @@ TOKEN = settings.TELEGRAM_TOKEN
 bot = AsyncTeleBot(TOKEN, parse_mode="HTML")
 
 
-@bot.message_handler(commands=["start", "help"])
+@bot.message_handler(commands=["start"])
+async def start(message):
+    keyboard = [
+        [
+            InlineKeyboardButton("Help", callback_data="1"),
+            InlineKeyboardButton("Fetch", callback_data="2")
+        ],
+        [InlineKeyboardButton("Unregister", callback_data="3")]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await bot.send_message(message.chat.id, "Please, choose:", reply_markup=reply_markup)
+
+
+@bot.callback_query_handler(func=lambda call: True)
+async def callback_query(call):
+    if call.data == "1":
+        await main(call.message)
+    elif call.data == "2":
+        await fetch_email(call.message)
+    elif call.data == "3":
+        await unregister_user(call.message)
+
+
+@bot.message_handler(commands=["help"])
 async def main(message):
     await bot.send_message(
         message.chat.id,
@@ -76,7 +102,7 @@ async def fetch_email(message):
 
 
 @bot.message_handler(commands=["unregister"])
-async def fetch_email(message):
+async def unregister_user(message):
     command_parts = message.text.split(" ", 1)
     if len(command_parts) < 2:
         await bot.send_message(
