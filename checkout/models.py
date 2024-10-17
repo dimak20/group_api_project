@@ -23,7 +23,7 @@ class Checkout(models.Model):
     def __str__(self) -> str:
         return (
             f"Expected checkout duration - "
-            f"{self.expected_return_date - self.checkout_date}"
+            f"{self.expected_return_date - self.checkout_date.date()}"
         )
 
     @staticmethod
