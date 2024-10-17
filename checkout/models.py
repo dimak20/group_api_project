@@ -27,7 +27,7 @@ class Checkout(models.Model):
         )
 
     @staticmethod
-    def validate(book: Book, error_to_response) -> None:
+    def validate_book(book: Book, error_to_response) -> None:
         if book.inventory < 1:
             raise error_to_response(
                 {
@@ -38,7 +38,7 @@ class Checkout(models.Model):
             )
 
     def clean(self):
-        self.validate(self.book, ValueError)
+        self.validate_book(self.book, ValueError)
 
     def save(
             self,

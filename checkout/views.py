@@ -49,7 +49,6 @@ class CheckoutViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         instance = serializer.save(
             user=self.request.user,
-            actual_return_date=timezone.now()
         )
 
     @action(
@@ -69,6 +68,7 @@ class CheckoutViewSet(viewsets.ModelViewSet):
             )
         with transaction.atomic():
             book.inventory += 1
+            checkout.actual_return_date=timezone.now()
             book.save()
             checkout.save()
 
