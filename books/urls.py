@@ -4,9 +4,9 @@ from rest_framework import routers
 from books.views import GenreViewSet, AuthorViewSet, BookViewSet
 
 router = routers.DefaultRouter()
-router.register("astronomy-shows", GenreViewSet),
-router.register("show-themes", AuthorViewSet),
-router.register("planetarium-domes", BookViewSet),
+router.register("genres", GenreViewSet),
+router.register("authors", AuthorViewSet),
+router.register("books", BookViewSet),
 
 
 app_name = "books-service"
