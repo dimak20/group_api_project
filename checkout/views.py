@@ -11,6 +11,7 @@ from checkout.serializers import (
     CheckoutReturnSerializer,
     CheckoutSerializer
 )
+from notifications.tasks import send_successful_checkout
 
 
 class CheckoutViewSet(viewsets.ModelViewSet):
@@ -50,6 +51,8 @@ class CheckoutViewSet(viewsets.ModelViewSet):
         instance = serializer.save(
             user=self.request.user,
         )
+
+        send_successful_checkout(self.request.user.id, instance.id)
 
     @action(
         methods=("POST",),
