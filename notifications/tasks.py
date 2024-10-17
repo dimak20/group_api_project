@@ -6,6 +6,7 @@ from django.utils import timezone
 from checkout.models import Checkout
 from notifications.bot import bot
 from notifications.models import NotificationProfile
+from payments.models import Payment
 
 
 @shared_task
@@ -46,5 +47,15 @@ def send_outdated_checkouts():
 
     return f"Outdated checkouts: {checkouts.count()}"
 
-# @shared_task
-# def send_payment_url():
+
+@shared_task
+def send_payment_url(payment_id):
+    payment = Payment.objects.filter(id=payment_id).first()
+    if payment:
+        user = payment.checkout.user
+        profile = user.notification_profile
+        if profile:
+            async_to_sync(bot.send_message)(
+                profile.chat_id,
+                f"Your payment url: {payment.sesstion_url}"
+            )
