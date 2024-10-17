@@ -42,7 +42,9 @@ class Book(models.Model):
     cover = models.CharField(choices=COVER, default="Hard", max_length=4)
     inventory = models.PositiveIntegerField(default=0)
     daily_fee = models.DecimalField(decimal_places=2, max_digits=5, default=0)
-    image = models.ImageField(null=True, upload_to=book_image_file_path)
+    image = models.ImageField(
+        upload_to=book_image_file_path, null=True, blank=True
+    )
 
     def __str__(self):
         return self.title
