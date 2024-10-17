@@ -1,9 +1,14 @@
-from django.shortcuts import render
 from rest_framework import viewsets
 
 from books.models import Genre, Author, Book
-from books.serializer import GenreSerializer, AuthorSerializer, AuthorListRetrieveSerializer, BookListSerializer, \
-    BookRetrieveSerializer, BookSerializer
+from books.serializer import (
+    GenreSerializer,
+    AuthorSerializer,
+    AuthorListRetrieveSerializer,
+    BookSerializer,
+    BookListSerializer,
+    BookRetrieveSerializer,
+)
 
 
 class GenreViewSet(viewsets.ModelViewSet):

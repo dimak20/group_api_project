@@ -16,7 +16,7 @@ class AuthorSerializer(serializers.ModelSerializer):
 
 
 class AuthorListRetrieveSerializer(AuthorSerializer):
-    books = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
+    books = serializers.SlugRelatedField(many=True, read_only=True, slug_field="title")
 
     class Meta(AuthorSerializer.Meta):
         fields = AuthorSerializer.Meta.fields + ["books"]
