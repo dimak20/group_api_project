@@ -23,8 +23,8 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 urlpatterns = [
     path('admin/', admin.site.urls),
     path(
-        "api/v1/books/",
-        include("books.urls", namespace="books-service")
+        "api/v1/catalog/",
+        include("books.urls", namespace="catalog")
     ),
     path(
         "api/v1/checkouts/",

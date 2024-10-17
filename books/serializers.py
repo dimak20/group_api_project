@@ -52,5 +52,5 @@ class BookListSerializer(BookSerializer):
 
 
 class BookRetrieveSerializer(BookSerializer):
-    authors = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    genres = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    authors = AuthorSerializer(many=True)
+    genres = GenreSerializer(many=True)

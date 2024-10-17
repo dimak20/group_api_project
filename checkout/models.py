@@ -6,7 +6,7 @@ from user.models import User
 
 
 class Checkout(models.Model):
-    checkout_date = models.DateTimeField(auto_now_add=True)
+    checkout_date = models.DateField(auto_now_add=True)
     expected_return_date = models.DateField()
     actual_return_date = models.DateField(null=True, blank=True)
     book = models.ForeignKey(
