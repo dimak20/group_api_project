@@ -20,15 +20,15 @@ services:
     networks:
       - library
 
-#  bot:
-#    build: .
-#    restart: on-failure
-#    command: >
-#      python manage.py run_bot
-#    env_file:
-#      - .env
-#    depends_on:
-#      - db
+  bot:
+    build: .
+    restart: on-failure
+    command: >
+      python manage.py run_bot
+    env_file:
+      - .env
+    depends_on:
+      - db
 
 
   db:
