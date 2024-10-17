@@ -1,6 +1,4 @@
-from tkinter.tix import CheckList
-
-from django.shortcuts import render
+from django.utils import timezone
 from rest_framework import viewsets, permissions
 
 from checkout.models import Checkout
@@ -15,7 +13,7 @@ from checkout.serializers import (
 class CheckoutViewSet(viewsets.ModelViewSet):
     model = Checkout
     queryset = Checkout.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_serializer_class(self):
 
@@ -44,4 +42,10 @@ class CheckoutViewSet(viewsets.ModelViewSet):
             return self.queryset.select_related()
 
         return queryset
+
+    def perform_create(self, serializer):
+        instance = serializer.save(
+            user=self.request.user,
+            actual_return_date=timezone.now()
+        )
 
