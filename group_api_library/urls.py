@@ -1,5 +1,5 @@
 """
-URL configuration for Group_api_library project.
+URL configuration for group_api_library project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.1/topics/http/urls/
