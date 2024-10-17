@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-
-# from books.serializers import BookSerializer
+from books.serializers import BookSerializer
 from user.serializers import UserSerializer
 from checkout.models import Checkout
 
