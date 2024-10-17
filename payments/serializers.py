@@ -17,8 +17,10 @@ class PaymentSerializer(serializers.ModelSerializer):
             "money_to_pay"
         ]
 
+
 class PaymentListSerializer(PaymentSerializer):
     checkout = CheckoutListSerializer(many=True, read_only=True)
+
 
 class PaymentDetailSerializer(PaymentSerializer):
     checkout = CheckoutListSerializer(many=True, read_only=True)
