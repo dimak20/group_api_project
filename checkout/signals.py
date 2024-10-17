@@ -5,8 +5,8 @@ from checkout.models import Checkout
 
 
 @receiver(post_save, sender=Checkout)
-def update_book_inventory(sender, instance: Checkout, **kwargs) -> None:
-    if not instance.actual_return_date:
+def update_book_inventory(sender, instance: Checkout, created: bool, **kwargs) -> None:
+    if not instance.actual_return_date and not created:
         book = instance.book
         book.inventory -= 1
 
