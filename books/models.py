@@ -9,9 +9,18 @@ class Author(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
 
+    def __str__(self):
+        return f"{self.last_name} {self.first_name}"
+
+    class Meta:
+        ordering = ["last_name", "first_name"]
+
 
 class Genre(models.Model):
     name = models.CharField(max_length=50)
+
+    class Meta:
+        ordering = ["name"]
 
 
 def book_image_file_path(instance, filename) -> os.path:
@@ -31,3 +40,6 @@ class Book(models.Model):
     inventory = models.PositiveIntegerField(default=0)
     daily_fee = models.DecimalField(decimal_places=2, max_digits=5, default=0)
     image = models.ImageField(null=True, upload_to=book_image_file_path)
+
+    def __str__(self):
+        return {self.title}
