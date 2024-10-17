@@ -8,7 +8,7 @@ from user.models import User
 class Checkout(models.Model):
     checkout_date = models.DateTimeField(auto_now_add=True)
     expected_return_date = models.DateField()
-    actual_return_date = models.DateField()
+    actual_return_date = models.DateField(null=True, blank=True)
     book = models.ForeignKey(
         Book,
         on_delete=DO_NOTHING,
@@ -31,7 +31,9 @@ class Checkout(models.Model):
         if book.inventory < 1:
             raise error_to_response(
                 {
-                    "book inventory": "No available books with this title yet"
+                    "book inventory": "No available copies of "
+                    "this title at the moment. Please choose another book."
+
                 }
             )
 
