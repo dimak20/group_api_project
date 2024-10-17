@@ -4,7 +4,7 @@ from rest_framework import routers
 from checkout import views
 
 router = routers.DefaultRouter()
-router.register("checkouts", views.CheckoutViewSet)
+router.register("", views.CheckoutViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
