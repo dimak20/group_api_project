@@ -20,15 +20,15 @@ services:
     networks:
       - library
 
-  bot:
-    build: .
-    restart: on-failure
-    command: >
-      python manage.py run_bot
-    env_file:
-      - .env
-    depends_on:
-      - db
+#  bot:
+#    build: .
+#    restart: on-failure
+#    command: >
+#      python manage.py run_bot
+#    env_file:
+#      - .env
+#    depends_on:
+#      - db
 
 
   db:
@@ -78,7 +78,7 @@ services:
     env_file:
       - .env
     command: >
-      sh -c "celery -A group_library_project worker --loglevel=info"
+      sh -c "celery -A group_api_library worker --loglevel=info"
     depends_on:
       - db
       - redis
@@ -89,7 +89,7 @@ services:
     build:
       context: .
     user: my_user
-    command: "celery -A group_library_project beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    command: "celery -A group_api_library beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
     env_file:
       - .env
     volumes:
@@ -106,7 +106,7 @@ services:
       context: .
     ports:
       - "5555:5555"
-    command: "celery -A group_library_project flower --address=0.0.0.0"
+    command: "celery -A group_api_library flower --address=0.0.0.0"
     depends_on:
       - celery
       - celery-beat
