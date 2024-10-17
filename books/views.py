@@ -41,8 +41,30 @@ class BookViewSet(viewsets.ModelViewSet):
             return BookRetrieveSerializer
         return BookSerializer
 
+    @staticmethod
+    def separate_ids(ids_list: str):
+        return [int(id_) for id_ in ids_list.split(",")]
+
     def get_queryset(self):
         queryset = self.queryset
-        if self.action in ["list", "retrieve"]:
+
+        if self.action == "list":
             queryset = queryset.prefetch_related("authors", "genres")
+            authors = self.request.query_params.get("authors")
+            genres = self.request.query_params.get("genres")
+            title = self.request.query_params.get("title")
+
+            if authors:
+                author_ids = self.separate_ids(authors)
+                queryset = queryset.filter(authors__id__in=author_ids)
+            if genres:
+                genre_ids = self.separate_ids(genres)
+                queryset = queryset.filter(genres__id__in=genre_ids)
+            if title:
+                queryset = queryset.filter(title__icontains=title)
+            return queryset.distinct()
+
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related("authors", "genres")
+
         return queryset
