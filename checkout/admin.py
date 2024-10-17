@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from checkout.models import Checkout
+
+
+admin.site.register(Checkout)
