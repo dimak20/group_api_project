@@ -21,15 +21,15 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path(
-        "api/v1/books/",
-        include("books.urls", namespace="books-service")
-    ),
+    path('admin/', admin.site.urls),
     # path(
-    #     "api/v1/checkout/",
-    #     include("borrowings_service.urls", namespace="borrowings-service")
+    #     "api/v1/books/",
+    #     include("books_service.urls", namespace="books-service")
     # ),
+    path(
+        "api/v1/checkouts/",
+        include("checkout.urls", namespace="checkouts")
+    ),
     path(
         "api/v1/user/",
         include("user.urls", namespace="users")
