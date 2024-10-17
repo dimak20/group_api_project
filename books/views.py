@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 
 from books.models import Genre, Author, Book
-from books.serializer import (
+from books.serializers import (
     GenreSerializer,
     AuthorSerializer,
     AuthorListRetrieveSerializer,
