@@ -13,13 +13,11 @@ class CheckoutSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "checkout_date",
-            "expected_return_date",
+            "expected_return",
             "book",
             "user",
         ]
 
-        def __init__(self):
-            self.instance = None
 
         def validate(self, attrs):
             Checkout.validate(attrs["book"], serializers.ValidationError())
