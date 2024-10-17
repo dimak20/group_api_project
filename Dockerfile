@@ -19,5 +19,6 @@ RUN adduser \
 RUN chown -R my_user /files/media
 RUN chmod -R 755 /files/media
 
+EXPOSE 8000
 
 USER my_user
