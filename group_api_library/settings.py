@@ -271,3 +271,6 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 
 SENDGRID_CLIENT = SendGridAPIClient(SENDGRID_API_KEY)
+
+# Fine multiplier for overdue checkouts
+OVERDUE_FINE_MULTIPLIER = os.getenv("FINE_MULTIPLIER", 2)
