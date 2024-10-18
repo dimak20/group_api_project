@@ -24,7 +24,12 @@ class CheckoutViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = CheckoutFilter
-    ordering_fields = ["checkout_date", "expected_return_date", "user__username"]
+    ordering_fields = [
+        "checkout_date",
+        "expected_return_date",
+        "book__title",
+        "user__last_name"
+    ]
     ordering = ["checkout_date"]
 
     def get_serializer_class(self):
