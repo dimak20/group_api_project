@@ -34,10 +34,10 @@ urlpatterns = [
         "api/v1/user/",
         include("user.urls", namespace="users")
     ),
-    # path(
-    #     "api/v1/payments/",
-    #     include("payments.urls", namespace="payments-service"),
-    # ),
+    path(
+        "api/v1/payments/",
+        include("payments.urls", namespace="payments-service"),
+    ),
     path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/v1/doc/swagger/",
