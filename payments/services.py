@@ -1,12 +1,13 @@
 from decimal import Decimal
 
 import stripe
+from django.conf import settings
 from django.urls import reverse
 from rest_framework.request import Request
 
 from checkout.models import Checkout
 from payments.exceptions import InvalidPeriodError
-from payments.models import Payment
+from payments.models import Payment, TypeChoices
 
 
 def create_checkout_session(checkout_id: int, request: Request, overdue: bool = False):
@@ -16,17 +17,23 @@ def create_checkout_session(checkout_id: int, request: Request, overdue: bool = 
 
     try:
         billing_period = get_billing_period(checkout, overdue=overdue)
-        return create_stripe_checkout_session(billing_period, checkout, request)
+        return create_stripe_checkout_session(billing_period, checkout, request, overdue=overdue)
     except InvalidPeriodError as e:
         return None, str(e)
 
 
-def create_stripe_checkout_session(billing_period, checkout, request):
+def create_stripe_checkout_session(billing_period, checkout, request, overdue: bool = False):
     total_amount = int(
         (Decimal(billing_period) * checkout.book.daily_fee * Decimal("100")).quantize(
             Decimal("1")
         )
     )
+    payment_type = TypeChoices.PAYMENT
+
+    if overdue:
+        total_amount *= int(settings.OVERDUE_FINE_MULTIPLIER)
+        payment_type = TypeChoices.FINE
+
 
     if total_amount <= 0:
         return None, "Invalid amount to pay."
@@ -34,7 +41,7 @@ def create_stripe_checkout_session(billing_period, checkout, request):
     success_url_base = request.build_absolute_uri(reverse("payments:success-url"))
     success_url = f"{success_url_base}?session_id={{CHECKOUT_SESSION_ID}}"
 
-    cancel_url = request.build_absolute_uri(reverse("payments:cancel-url"))
+    cancel_url = request.build_absolute_uri(reverse("payment:cancel-url"))
 
     checkout_session = stripe.checkout.Session.create(
         payment_method_types=["card"],
@@ -57,7 +64,7 @@ def create_stripe_checkout_session(billing_period, checkout, request):
 
     payment = Payment.objects.create(
         status="pending",
-        payment_type="payment",
+        payment_type=payment_type,
         checkout=checkout,
         session_url=checkout_session.url,
         session_id=checkout_session.id,

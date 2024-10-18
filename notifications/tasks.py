@@ -5,6 +5,7 @@ from celery import shared_task
 from django.db.models import F
 from django.utils import timezone
 
+from books.models import Book
 from checkout.models import Checkout
 from notifications.bot import bot
 from notifications.email_utils import send_email
@@ -81,3 +82,17 @@ def create_success_email(checkout_id: int):
             send_email(subject, message_content, user.email)
         except Exception as e:
             logger.error(f"Error sending email to {user.email}: {e}")
+
+
+@shared_task
+def send_success_payment_url(payment_id: int):
+    payment = Payment.objects.filter(id=payment_id).first()
+    if payment:
+        book = Book.objects.filter(id=payment.checkout.book.id).first()
+        profile = NotificationProfile.objects.filter(user_id=payment.checkout.user.id).first()
+        if profile:
+            async_to_sync(bot.send_message)(
+                profile.chat_id,
+                f"Your payment was successful! \n"
+                f"Book: {book.title}"
+            )

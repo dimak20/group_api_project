@@ -15,6 +15,7 @@ from checkout.serializers import (
     CheckoutSerializer
 )
 from notifications.tasks import send_successful_checkout
+from payments.services import create_checkout_session
 
 
 class CheckoutViewSet(viewsets.ModelViewSet):
@@ -57,6 +58,8 @@ class CheckoutViewSet(viewsets.ModelViewSet):
             user=self.request.user,
         )
 
+        create_checkout_session(instance.id, self.request, overdue=False)
+
         send_successful_checkout(self.request.user.id, instance.id)
 
     @action(
@@ -78,7 +81,10 @@ class CheckoutViewSet(viewsets.ModelViewSet):
             book.inventory += 1
             checkout.actual_return_date=timezone.now()
             book.save()
-            checkout.save()
+            checkout.save(update_fields=("actual_return_date",))
+
+        if checkout.actual_return_date > checkout.expected_return_date:
+            create_checkout_session(checkout.id, self.request, overdue=True)
 
         serializer = self.get_serializer(checkout, data=request.data)
         serializer.is_valid(raise_exception=True)

@@ -229,7 +229,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": False,
 }
 
-USE_REDIS = os.getenv("USE_REDIS", "false").lower() == "true"
+USE_REDIS = False
 
 if USE_REDIS:
     CACHES = {
@@ -271,3 +271,6 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 
 SENDGRID_CLIENT = SendGridAPIClient(SENDGRID_API_KEY)
+
+# Fine multiplier for overdue checkouts
+OVERDUE_FINE_MULTIPLIER = os.getenv("FINE_MULTIPLIER", 2)

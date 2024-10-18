@@ -9,4 +9,4 @@ class NotificationProfile(models.Model):
         on_delete=CASCADE,
         related_name="notification_profile"
     )
-    chat_id = models.IntegerField(unique=True)
+    chat_id = models.BigIntegerField(unique=True)
