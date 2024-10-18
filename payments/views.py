@@ -107,7 +107,7 @@ class CreateCheckoutSessionView(APIView):
                 checkout=borrowing,
                 session_url=checkout_session.url,
                 session_id=checkout_session.id,
-                money_to_pay=money_to_pay,
+                total_amount=money_to_pay,
             )
             serializer = PaymentSerializer(payment)
 
