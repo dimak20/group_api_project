@@ -104,6 +104,8 @@ password: test_password
 
 5. Access the API at http://localhost:8000/api/v1/
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Run with Docker (advanced monitoring version)
 
 1. Clone repository  
@@ -176,6 +178,8 @@ Flower: http://localhost:5555
 PGAdmin: http://localhost:3333
 Redis-command: http://localhost:8081
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Project configuration
 
@@ -320,3 +324,5 @@ Project
 * Prometheus usage for service monitoring
 * Grafana for visualizing server usage
 * Beat for scheduling background tasks
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
