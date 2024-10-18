@@ -28,6 +28,7 @@ class BookSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "title",
+            "year",
             "authors",
             "genres",
             "cover",
@@ -35,6 +36,10 @@ class BookSerializer(serializers.ModelSerializer):
             "daily_fee",
             "image"
         )
+
+    def validate(self, attrs):
+        Book.validate_year(attrs["year"])
+        return attrs
 
 
 class BookListSerializer(BookSerializer):
@@ -44,7 +49,7 @@ class BookListSerializer(BookSerializer):
     )
 
     class Meta(BookSerializer.Meta):
-        fields = ["id", "title", "authors", "genres", "image"]
+        fields = ["id", "title", "year", "authors", "genres", "image"]
 
     def get_authors(self, obj):
         authors = obj.authors.all()
