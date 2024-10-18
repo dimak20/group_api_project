@@ -20,6 +20,9 @@ class Checkout(models.Model):
         related_name="checkouts"
     )
 
+    class Meta:
+        ordering = ["-checkout_date"]
+
     def __str__(self) -> str:
         return (
             f"Expected checkout duration - "
