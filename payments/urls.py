@@ -8,10 +8,10 @@ from payments.views import (
     SuccessPaymentView,
 )
 
-app_name = "payments"
+app_name = "payment"
 
 router = DefaultRouter()
-router.register("payments", PaymentViewSet)
+router.register("payment", PaymentViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
@@ -20,6 +20,6 @@ urlpatterns = [
         CreateCheckoutSessionView.as_view(),
         name="create-checkout-session",
     ),
-    path("cancel", CancelPaymentView.as_view(), name="cancel-url"),
+    path("cancel/", CancelPaymentView.as_view(), name="cancel-url"),
     path("success/", SuccessPaymentView.as_view(), name="success-url"),
 ]

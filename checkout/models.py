@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import DO_NOTHING
+from django.utils import timezone
 
 from books.models import Book
 from user.models import User
@@ -36,9 +37,19 @@ class Checkout(models.Model):
 
                 }
             )
+    @staticmethod
+    def validate_return_date(expected_return_date, error_to_response) -> None:
+        if expected_return_date <= timezone.now().date():
+            raise error_to_response(
+                {
+                    "return date": "The return date must be at "
+                                   "least one day after the current date"
+                }
+            )
 
     def clean(self):
         self.validate_book(self.book, ValueError)
+        self.validate_return_date(self.expected_return_date,ValueError)
 
     def save(
             self,
