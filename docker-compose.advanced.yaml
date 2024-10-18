@@ -52,7 +52,7 @@ services:
     depends_on:
       - db
     volumes:
-      - movie_db_pgadmin_data:/var/lib/pgadmin
+      - library_db_pgadmin_data:/var/lib/pgadmin
     networks:
       - library
 
@@ -71,6 +71,23 @@ services:
       timeout: 60s
       retries: 5
     restart: always
+
+  redis-admin:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - library
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081 || exit 1" ]
+      interval: 60s
+      timeout: 10s
+      retries: 5
 
   celery:
     build:
@@ -115,11 +132,42 @@ services:
     networks:
       - library
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - library
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - library
+
 
 volumes:
   my_db:
   my_media:
-  movie_db_pgadmin_data:
+  library_db_pgadmin_data:
+  prometheus_data: { }
+  grafana-data: { }
 
 networks:
   library:
