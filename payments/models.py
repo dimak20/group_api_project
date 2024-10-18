@@ -39,6 +39,5 @@ class Payment(models.Model):
 
     def __str__(self) -> str:
         return (
-            f"Status: {self.status}. Session_id: {self.session_id}. "
-            f"URL: {self.session_url}"
+            f"Status: {self.status}. URL: {self.session_url}."
         )

@@ -6,41 +6,43 @@ from checkout.models import Checkout
 
 
 class CheckoutSerializer(serializers.ModelSerializer):
+    payments = serializers.StringRelatedField(many=True, read_only=True)
 
-        def validate(self, attrs):
+    def validate(self, attrs):
 
-            data = super(CheckoutSerializer, self).validate(attrs=attrs)
-            Checkout.validate_book(attrs["book"], serializers.ValidationError)
-            Checkout.validate_return_date(attrs["expected_return_date"], serializers.ValidationError)
+        data = super(CheckoutSerializer, self).validate(attrs=attrs)
+        Checkout.validate_book(attrs["book"], serializers.ValidationError)
+        Checkout.validate_return_date(attrs["expected_return_date"], serializers.ValidationError)
 
-            if self.instance is None and "expected_return_date" not in attrs:
-                raise serializers.ValidationError(
-                    {"expected_return_date": "This field is required."}
-                )
+        if self.instance is None and "expected_return_date" not in attrs:
+            raise serializers.ValidationError(
+                {"expected_return_date": "This field is required."}
+            )
 
-            return data
+        return data
 
-        class Meta:
-            model = Checkout
-            fields = [
-                "id",
-                "checkout_date",
-                "expected_return_date",
-                "book",
-                "user",
-            ]
+    class Meta:
+        model = Checkout
+        fields = [
+            "id",
+            "checkout_date",
+            "expected_return_date",
+            "book",
+            "user",
+            "payments"
+        ]
 
-        def update(self, instance, validated_data):
-            if (
-                "expected_return_date" in validated_data
-                and validated_data
-            ["expected_return_date"] != instance.expected_return_date
-            ):
-                raise serializers.ValidationError(
-                    {"expected_return_date":
-                         "You cannot change this field after checkout."}
-                )
-            return super().update(instance, validated_data)
+    def update(self, instance, validated_data):
+        if (
+            "expected_return_date" in validated_data
+            and validated_data
+        ["expected_return_date"] != instance.expected_return_date
+        ):
+            raise serializers.ValidationError(
+                {"expected_return_date":
+                     "You cannot change this field after checkout."}
+            )
+        return super().update(instance, validated_data)
 
 
 class CheckoutListSerializer(serializers.ModelSerializer):

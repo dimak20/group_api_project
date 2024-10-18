@@ -229,7 +229,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": False,
 }
 
-USE_REDIS = os.getenv("USE_REDIS", "false").lower() == "true"
+USE_REDIS = False
 
 if USE_REDIS:
     CACHES = {
