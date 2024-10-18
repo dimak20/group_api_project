@@ -14,14 +14,17 @@ class PaymentSerializer(serializers.ModelSerializer):
             "checkout",
             "session_url",
             "session_id",
-            "money_to_pay"
+            "money_to_pay",
         ]
+
 
 class PaymentListSerializer(PaymentSerializer):
     checkout = CheckoutListSerializer()
 
+
 class PaymentDetailSerializer(PaymentSerializer):
     checkout = CheckoutDetailSerializer()
+
 
 class BorrowingIDSerializer(serializers.Serializer):
     checkout_id = serializers.IntegerField()
