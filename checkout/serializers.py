@@ -12,7 +12,11 @@ class CheckoutSerializer(serializers.ModelSerializer):
 
         data = super(CheckoutSerializer, self).validate(attrs=attrs)
         Checkout.validate_book(attrs["book"], serializers.ValidationError)
-        Checkout.validate_return_date(attrs["expected_return_date"], serializers.ValidationError)
+        Checkout.validate_return_date(
+            attrs["checkout_date"],
+            attrs["expected_return_date"],
+            serializers.ValidationError
+        )
 
         if self.instance is None and "expected_return_date" not in attrs:
             raise serializers.ValidationError(
@@ -28,7 +32,6 @@ class CheckoutSerializer(serializers.ModelSerializer):
             "checkout_date",
             "expected_return_date",
             "book",
-            "user",
             "payments"
         ]
 

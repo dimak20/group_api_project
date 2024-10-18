@@ -76,7 +76,7 @@ class CheckoutViewSet(viewsets.ModelViewSet):
             book.inventory += 1
             checkout.actual_return_date=timezone.now()
             book.save()
-            checkout.save()
+            checkout.save(update_fields=("actual_return_date",))
 
         if checkout.actual_return_date > checkout.expected_return_date:
             create_checkout_session(checkout.id, self.request, overdue=True)
