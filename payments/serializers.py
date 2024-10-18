@@ -14,7 +14,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             "checkout",
             "session_url",
             "session_id",
-            "money_to_pay",
+            "total_amount",
         ]
 
 
