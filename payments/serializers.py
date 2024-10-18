@@ -17,10 +17,11 @@ class PaymentSerializer(serializers.ModelSerializer):
             "money_to_pay"
         ]
 
-
 class PaymentListSerializer(PaymentSerializer):
-    checkout = CheckoutListSerializer(many=True, read_only=True)
-
+    checkout = CheckoutListSerializer()
 
 class PaymentDetailSerializer(PaymentSerializer):
-    checkout = CheckoutListSerializer(many=True, read_only=True)
+    checkout = CheckoutDetailSerializer()
+
+class BorrowingIDSerializer(serializers.Serializer):
+    checkout_id = serializers.IntegerField()
