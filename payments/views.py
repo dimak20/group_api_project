@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from checkout.models import Checkout
+from notifications.tasks import send_success_payment_url
 from payments.models import Payment, StatusChoices
 from payments.serializers import (
     PaymentListSerializer,
@@ -142,5 +143,7 @@ class SuccessPaymentView(APIView):
         payment = get_object_or_404(Payment, session_id=session_id)
         payment.status = StatusChoices.PAID
         payment.save()
+
+        send_success_payment_url(payment_id=payment.id)
 
         return Response("Your payment was successful!", status=status.HTTP_200_OK)

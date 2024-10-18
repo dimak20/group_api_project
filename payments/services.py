@@ -31,7 +31,7 @@ def create_stripe_checkout_session(billing_period, checkout, request, overdue: b
     payment_type = TypeChoices.PAYMENT
 
     if overdue:
-        total_amount *= settings.OVERDUE_FINE_MULTIPLIER
+        total_amount *= int(settings.OVERDUE_FINE_MULTIPLIER)
         payment_type = TypeChoices.FINE
 
 
@@ -41,7 +41,7 @@ def create_stripe_checkout_session(billing_period, checkout, request, overdue: b
     success_url_base = request.build_absolute_uri(reverse("payments:success-url"))
     success_url = f"{success_url_base}?session_id={{CHECKOUT_SESSION_ID}}"
 
-    cancel_url = request.build_absolute_uri(reverse("payments:cancel-url"))
+    cancel_url = request.build_absolute_uri(reverse("payment:cancel-url"))
 
     checkout_session = stripe.checkout.Session.create(
         payment_method_types=["card"],
