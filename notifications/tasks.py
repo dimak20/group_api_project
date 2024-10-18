@@ -89,7 +89,7 @@ def send_success_payment_url(payment_id: int):
     payment = Payment.objects.filter(id=payment_id).first()
     if payment:
         book = Book.objects.filter(id=payment.checkout.book.id).first()
-        profile = NotificationProfile.objects.filter(user_id=payment.checkout.user.id)
+        profile = NotificationProfile.objects.filter(user_id=payment.checkout.user.id).first()
         if profile:
             async_to_sync(bot.send_message)(
                 profile.chat_id,
