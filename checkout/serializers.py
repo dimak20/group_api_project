@@ -6,30 +6,27 @@ from checkout.models import Checkout
 
 
 class CheckoutSerializer(serializers.ModelSerializer):
-    expected_return = serializers.DateTimeField(required=True)
-
-    class Meta:
-        model = Checkout
-        fields = [
-            "id",
-            "checkout_date",
-            "expected_return_date",
-            "book",
-            "user",
-        ]
-
-        def __init__(self):
-            self.instance = None
 
         def validate(self, attrs):
-            Checkout.validate(attrs["book"], serializers.ValidationError())
 
+            data = super(CheckoutSerializer, self).validate(attrs=attrs)
+            Checkout.validate_book(attrs["book"], serializers.ValidationError)
             if self.instance is None and "expected_return_date" not in attrs:
                 raise serializers.ValidationError(
                     {"expected_return_date": "This field is required."}
                 )
 
-            return attrs
+            return data
+
+        class Meta:
+            model = Checkout
+            fields = [
+                "id",
+                "checkout_date",
+                "expected_return_date",
+                "book",
+                "user",
+            ]
 
         def update(self, instance, validated_data):
             if (

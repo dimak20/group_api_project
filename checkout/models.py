@@ -6,7 +6,7 @@ from user.models import User
 
 
 class Checkout(models.Model):
-    checkout_date = models.DateTimeField(auto_now_add=True)
+    checkout_date = models.DateField(auto_now_add=True)
     expected_return_date = models.DateField()
     actual_return_date = models.DateField(null=True, blank=True)
     book = models.ForeignKey(
@@ -23,11 +23,11 @@ class Checkout(models.Model):
     def __str__(self) -> str:
         return (
             f"Expected checkout duration - "
-            f"{self.expected_return_date - self.checkout_date.date()}"
+            f"{self.expected_return_date - self.checkout_date}"
         )
 
     @staticmethod
-    def validate(book: Book, error_to_response) -> None:
+    def validate_book(book: Book, error_to_response) -> None:
         if book.inventory < 1:
             raise error_to_response(
                 {
@@ -38,7 +38,7 @@ class Checkout(models.Model):
             )
 
     def clean(self):
-        self.validate(self.book, ValueError)
+        self.validate_book(self.book, ValueError)
 
     def save(
             self,
