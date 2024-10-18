@@ -1,5 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.filters import OrderingFilter
 
 from books.filters import BookFilter
 from books.models import Genre, Author, Book
@@ -35,8 +36,10 @@ class AuthorViewSet(viewsets.ModelViewSet):
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all()
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = BookFilter
+    ordering_fields = ["title", "year", "authors__last_name"]
+    ordering = ["title"]
 
     def get_serializer_class(self):
         if self.action == "list":
