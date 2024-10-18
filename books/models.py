@@ -1,8 +1,10 @@
 import os
 import uuid
+from datetime import datetime
 
 from django.db import models
 from django.utils.text import slugify
+from rest_framework.exceptions import ValidationError
 
 
 class Author(models.Model):
@@ -37,6 +39,7 @@ class Book(models.Model):
     COVER = [("Hard", "Hard"), ("Soft", "Soft")]
 
     title = models.CharField(max_length=255)
+    year = models.IntegerField(null=True, blank=True)
     authors = models.ManyToManyField(Author, related_name="books")
     genres = models.ManyToManyField(Genre, related_name="books")
     cover = models.CharField(choices=COVER, default="Hard", max_length=4)
@@ -47,4 +50,30 @@ class Book(models.Model):
     )
 
     def __str__(self):
-        return self.title
+        return f"{self.title} ({self.year})"
+
+    class Meta:
+        ordering = ["id", "title", "year"]
+
+    @staticmethod
+    def validate_year(year: int):
+        current_year = datetime.now().year
+        if year and (year < 1000 or year > current_year):
+            raise ValidationError(f"Year must be in: 1000 - {current_year}")
+
+    def clean(self):
+        Book.validate_year(self.year)
+
+    def save(
+            self,
+            *args,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
+    ):
+        self.full_clean()
+        return super(Book, self).save(
+            force_insert, force_update, using, update_fields
+        )
+
