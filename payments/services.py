@@ -9,25 +9,13 @@ from payments.exceptions import InvalidPeriodError
 from payments.models import Payment
 
 
-def create_checkout_session(checkout_id: int, request: Request):
+def create_checkout_session(checkout_id: int, request: Request, overdue: bool = False):
     checkout = Checkout.objects.filter(id=checkout_id).first()
     if not checkout:
         return None, "Checkout does not exist"
 
     try:
-        billing_period = get_billing_period(checkout, overdue=False)
-        return create_stripe_checkout_session(billing_period, checkout, request)
-    except InvalidPeriodError as e:
-        return None, str(e)
-
-
-def create_overdue_payment(checkout_id: int, request: Request):
-    checkout = Checkout.objects.filter(id=checkout_id).first()
-    if not checkout:
-        return None, "Checkout does not exist"
-
-    try:
-        billing_period = get_billing_period(checkout, overdue=True)
+        billing_period = get_billing_period(checkout, overdue=overdue)
         return create_stripe_checkout_session(billing_period, checkout, request)
     except InvalidPeriodError as e:
         return None, str(e)
