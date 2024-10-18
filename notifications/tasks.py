@@ -1,3 +1,5 @@
+import logging
+
 from asgiref.sync import async_to_sync
 from celery import shared_task
 from django.db.models import F
@@ -5,8 +7,11 @@ from django.utils import timezone
 
 from checkout.models import Checkout
 from notifications.bot import bot
+from notifications.email_utils import send_email
 from notifications.models import NotificationProfile
 from payments.models import Payment
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -59,3 +64,20 @@ def send_payment_url(payment_id):
                 profile.chat_id,
                 f"Your payment url: {payment.sesstion_url}"
             )
+
+
+@shared_task
+def create_success_email(checkout_id: int):
+    checkout = Checkout.objects.filter(id=checkout_id).first()
+    if checkout:
+        user = checkout.user
+        try:
+            subject = "Reminder about your checkout"
+            message_content = (
+                f"Thanks for borrowing book {checkout.book.title}! <br>"
+                f"Expected return date: {checkout.expected_return_date}.<br>"
+                f"Daily fee: {checkout.book.daily_fee}"
+            )
+            send_email(subject, message_content, user.email)
+        except Exception as e:
+            logger.error(f"Error sending email to {user.email}: {e}")

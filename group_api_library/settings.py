@@ -14,6 +14,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
+from sendgrid import SendGridAPIClient
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -264,3 +265,9 @@ STRIPE_TEST_PUBLIC_KEY = os.getenv("STRIPE_TEST_PUBLIC_KEY")
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET")
 
 HOME_DOMAIN = os.getenv("HOME_DOMAIN")
+
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
+
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
+
+SENDGRID_CLIENT = SendGridAPIClient(SENDGRID_API_KEY)

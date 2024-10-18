@@ -16,7 +16,7 @@ class CheckoutSerializer(serializers.ModelSerializer):
                     {"expected_return_date": "This field is required."}
                 )
 
-            return attrs
+            return data
 
         class Meta:
             model = Checkout
