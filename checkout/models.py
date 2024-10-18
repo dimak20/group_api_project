@@ -38,8 +38,8 @@ class Checkout(models.Model):
                 }
             )
     @staticmethod
-    def validate_return_date(expected_return_date, error_to_response) -> None:
-        if expected_return_date <= timezone.now().date():
+    def validate_return_date(checkout_date ,expected_return_date, error_to_response) -> None:
+        if expected_return_date <= checkout_date:
             raise error_to_response(
                 {
                     "return date": "The return date must be at "
@@ -49,7 +49,11 @@ class Checkout(models.Model):
 
     def clean(self):
         self.validate_book(self.book, ValueError)
-        self.validate_return_date(self.expected_return_date,ValueError)
+        self.validate_return_date(
+            self.checkout_date,
+            self.expected_return_date,
+            ValueError
+        )
 
     def save(
             self,
