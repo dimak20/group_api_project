@@ -6,7 +6,7 @@ from user.models import User
 
 
 class Checkout(models.Model):
-    checkout_date = models.DateField(auto_now_add=True)
+    checkout_date = models.DateField(blank=True)
     expected_return_date = models.DateField()
     actual_return_date = models.DateField(null=True, blank=True)
     book = models.ForeignKey(
@@ -35,10 +35,11 @@ class Checkout(models.Model):
             raise error_to_response(
                 {
                     "book inventory": "No available copies of "
-                    "this title at the moment. Please choose another book."
+                                      "this title at the moment. Please choose another book."
 
                 }
             )
+
     @staticmethod
     def validate_return_date(
             checkout_date,
