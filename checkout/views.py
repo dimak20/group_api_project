@@ -1,9 +1,12 @@
 from django.db import transaction
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 
+from checkout.filters import CheckoutFilter
 from checkout.models import Checkout
 from checkout.serializers import (
     CheckoutListSerializer,
@@ -19,6 +22,15 @@ class CheckoutViewSet(viewsets.ModelViewSet):
     model = Checkout
     queryset = Checkout.objects.all()
     permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filterset_class = CheckoutFilter
+    ordering_fields = [
+        "checkout_date",
+        "expected_return_date",
+        "book__title",
+        "user__last_name"
+    ]
+    ordering = ["checkout_date"]
 
     def get_serializer_class(self):
 
