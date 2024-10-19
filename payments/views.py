@@ -143,13 +143,18 @@ class SuccessPaymentView(APIView):
         if not session_id:
             return Response("Stripe has failed to provide session id.", status=400)
 
-        payment = get_object_or_404(Payment, session_id=session_id)
-        payment.status = StatusChoices.PAID
-        payment.save()
+        session = stripe.checkout.Session.retrieve(session_id)
 
-        send_success_payment_url(payment_id=payment.id)
+        if session.payment_status == "paid":
+            payment = get_object_or_404(Payment, session_id=session_id)
+            payment.status = StatusChoices.PAID
+            payment.save()
 
-        return Response("Your payment was successful!", status=status.HTTP_200_OK)
+            send_success_payment_url(payment_id=payment.id)
+
+            return Response("Your payment was successful!", status=status.HTTP_200_OK)
+
+        return Response("Something went wrong...", status=status.HTTP_400_BAD_REQUEST)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
