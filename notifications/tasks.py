@@ -96,3 +96,14 @@ def send_success_payment_url(payment_id: int):
                 f"Your payment was successful! \n"
                 f"Book: {book.title}"
             )
+
+
+@shared_task
+def send_bot_message_with_text(user_id: int, text: str):
+    profile = NotificationProfile.objects.filter(user_id=user_id).first()
+
+    if profile:
+        async_to_sync(bot.send_message)(
+            profile.chat_id,
+            text
+        )
