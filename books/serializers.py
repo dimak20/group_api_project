@@ -1,3 +1,5 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from books.models import Author, Genre, Book
@@ -16,7 +18,9 @@ class AuthorSerializer(serializers.ModelSerializer):
 
 
 class AuthorListRetrieveSerializer(AuthorSerializer):
-    books = serializers.SlugRelatedField(many=True, read_only=True, slug_field="title")
+    books = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="title"
+    )
 
     class Meta(AuthorSerializer.Meta):
         fields = AuthorSerializer.Meta.fields + ["books"]
@@ -51,6 +55,7 @@ class BookListSerializer(BookSerializer):
     class Meta(BookSerializer.Meta):
         fields = ["id", "title", "year", "authors", "genres", "image"]
 
+    @extend_schema_field(OpenApiTypes.STR)
     def get_authors(self, obj):
         authors = obj.authors.all()
         return [f"{author}" for author in authors]
