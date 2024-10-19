@@ -31,8 +31,6 @@ DOMAIN = settings.HOME_DOMAIN
 
 WEBHOOK_SECRET = settings.WEBHOOK_SECRET
 
-stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
-
 FINE_MULTIPLIER = 2
 
 

@@ -13,6 +13,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import stripe
 from dotenv import load_dotenv
 from sendgrid import SendGridAPIClient
 
@@ -268,6 +269,9 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "123456789:ABCdefGhIJKlmNOpQRsTuVwX
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
 
 STRIPE_TEST_PUBLIC_KEY = os.getenv("STRIPE_TEST_PUBLIC_KEY")
+
+if STRIPE_TEST_SECRET_KEY:
+    stripe.api_key = STRIPE_TEST_SECRET_KEY
 
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET")
 
