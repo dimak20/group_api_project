@@ -4,9 +4,12 @@ from decimal import Decimal
 
 import stripe
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -147,3 +150,36 @@ class SuccessPaymentView(APIView):
         send_success_payment_url(payment_id=payment.id)
 
         return Response("Your payment was successful!", status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class StripeWebhookView(View):
+    def post(self, request, *args, **kwargs):
+        payload = request.body
+        sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
+        endpoint_secret = WEBHOOK_SECRET
+        event = None
+
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        except (ValueError, stripe.error.SignatureVerificationError) as e:
+            return HttpResponse(status=400)
+
+        if event["type"] == "checkout.session.completed":
+            session = event["data"]["object"]
+            session_id = session["id"]
+
+            if session["payment_status"] == "paid":
+                payment = Payment.objects.filter(session_id=session_id).first()
+                if payment:
+                    try:
+                        payment.status = "paid"
+                        payment.save()
+                        logger.info(f"Payment {payment.id} marked as paid.")
+                    except Exception as e:
+                        logger.error(f"Error updating payment status: {e}")
+                        return HttpResponse(status=500)
+                else:
+                    logger.warning(f"No payment found for session_id: {session_id}")
+
+        return JsonResponse({"status": "success"})

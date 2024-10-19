@@ -6,6 +6,7 @@ from payments.views import (
     CreateCheckoutSessionView,
     CancelPaymentView,
     SuccessPaymentView,
+    StripeWebhookView,
 )
 
 app_name = "payment"
@@ -22,4 +23,5 @@ urlpatterns = [
     ),
     path("cancel/", CancelPaymentView.as_view(), name="cancel-url"),
     path("success/", SuccessPaymentView.as_view(), name="success-url"),
+    path("stripe/webhook/", StripeWebhookView.as_view(), name="stripe-webhook"),
 ]

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+from notifications.tasks import send_bot_message_with_text
 from payments.models import StatusChoices, Payment
 
 stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
@@ -28,5 +29,11 @@ def check_expired_checkout_sessions():
                 book = payment.checkout.book
                 book.inventory += 1
                 book.save(update_fields=["inventory"])
+
+        send_bot_message_with_text(
+            payment.checkout.user.id,
+            f"Your checkout session for {payment.checkout.book.title} "
+            f"has expired and the checkout has been cancelled."
+        )
 
     return f"Number of expired sessions: {expired_sessions}"
