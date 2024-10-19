@@ -7,6 +7,7 @@ from checkout.models import Checkout
 class StatusChoices(models.TextChoices):
     PENDING = "pending", "Pending"
     PAID = "paid", "Paid"
+    EXPIRED = "expired", "Expired"
 
 
 class TypeChoices(models.TextChoices):
@@ -36,6 +37,7 @@ class Payment(models.Model):
         max_digits=10,
         decimal_places=2,
     )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
         return (
