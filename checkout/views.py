@@ -16,6 +16,7 @@ from checkout.serializers import (
 )
 from notifications.tasks import send_successful_checkout
 from payments.models import Payment
+from payments.serializers import PaymentListSerializer
 from payments.services import create_checkout_session
 
 
@@ -35,7 +36,7 @@ class CheckoutViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _has_debt(user_id: int) -> tuple[bool, any]:
-        checkout_ids = [check.id for check in Checkout.objects.filter(pk=user_id)]
+        checkout_ids = [check.id for check in Checkout.objects.filter(user_id=user_id)]
         if checkout_ids:
             payments = Payment.objects.filter(checkout_id__in=checkout_ids)
             if any(pay.status == "pending" for pay in payments):
@@ -57,8 +58,8 @@ class CheckoutViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
 
         if (
-            self.action in ("list", "retrieve")
-            and not self.request.user.is_staff
+                self.action in ("list", "retrieve")
+                and not self.request.user.is_staff
         ):
             return queryset.filter(
                 user=self.request.user,
@@ -71,22 +72,28 @@ class CheckoutViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
+        instance = serializer.save(
+            user=self.request.user,
+            checkout_date=timezone.now()
+        )
+
+        create_checkout_session(instance.id, self.request, overdue=False)
+        send_successful_checkout(self.request.user.id, instance.id)
+
+    def create(self, request, *args, **kwargs):
         is_debt, payment = self._has_debt(self.request.user.pk)
         if is_debt:
             return Response(
                 status=status.HTTP_418_IM_A_TEAPOT,
                 data={
-                    "payment_id": payment.id,
-                    "payment_URL": payment.session_url
+                    "payments": PaymentListSerializer(payment, many=True).data
                 }
             )
-
-        instance = serializer.save(
-            user=self.request.user,
-        )
-
-        create_checkout_session(instance.id, self.request, overdue=False)
-        send_successful_checkout(self.request.user.id, instance.id)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(
         methods=("POST",),
@@ -105,7 +112,7 @@ class CheckoutViewSet(viewsets.ModelViewSet):
             )
         with transaction.atomic():
             book.inventory += 1
-            checkout.actual_return_date=timezone.now()
+            checkout.actual_return_date = timezone.now()
             book.save()
             checkout.save(update_fields=("actual_return_date",))
 
