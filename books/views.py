@@ -12,6 +12,7 @@ from books.serializers import (
     BookListSerializer,
     BookRetrieveSerializer,
 )
+from books.schemas.books_filtering_ordering import book_list_create_schema
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -34,6 +35,7 @@ class AuthorViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+@book_list_create_schema
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all()
     filter_backends = [DjangoFilterBackend, OrderingFilter]
