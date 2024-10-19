@@ -1,8 +1,9 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from books.serializers import BookSerializer
-from user.serializers import UserSerializer
 from checkout.models import Checkout
+from user.serializers import UserSerializer
 
 
 class CheckoutSerializer(serializers.ModelSerializer):
@@ -12,11 +13,12 @@ class CheckoutSerializer(serializers.ModelSerializer):
 
         data = super(CheckoutSerializer, self).validate(attrs=attrs)
         Checkout.validate_book(attrs["book"], serializers.ValidationError)
-        Checkout.validate_return_date(
-            attrs["checkout_date"],
-            attrs["expected_return_date"],
-            serializers.ValidationError
-        )
+        if not self.instance:
+            Checkout.validate_return_date(
+                timezone.now().date(),
+                attrs["expected_return_date"],
+                serializers.ValidationError
+            )
 
         if self.instance is None and "expected_return_date" not in attrs:
             raise serializers.ValidationError(
@@ -29,7 +31,6 @@ class CheckoutSerializer(serializers.ModelSerializer):
         model = Checkout
         fields = [
             "id",
-            "checkout_date",
             "expected_return_date",
             "book",
             "payments"
@@ -37,8 +38,8 @@ class CheckoutSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         if (
-            "expected_return_date" in validated_data
-            and validated_data
+                "expected_return_date" in validated_data
+                and validated_data
         ["expected_return_date"] != instance.expected_return_date
         ):
             raise serializers.ValidationError(
