@@ -15,6 +15,7 @@ from checkout.serializers import (
     CheckoutSerializer
 )
 from notifications.tasks import send_successful_checkout
+from payments.models import Payment
 from payments.services import create_checkout_session
 
 
@@ -31,6 +32,15 @@ class CheckoutViewSet(viewsets.ModelViewSet):
         "user__last_name"
     ]
     ordering = ["checkout_date"]
+
+    @staticmethod
+    def _has_debt(user_id: int) -> tuple[bool, any]:
+        checkout_ids = [check.id for check in Checkout.objects.filter(pk=user_id)]
+        if checkout_ids:
+            payments = Payment.objects.filter(checkout_id__in=checkout_ids)
+            if any(pay.status == "pending" for pay in payments):
+                return True, payments.filter(status="pending")
+        return False, None
 
     def get_serializer_class(self):
 
@@ -61,12 +71,21 @@ class CheckoutViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
+        is_debt, payment = self._has_debt(self.request.user.pk)
+        if is_debt:
+            return Response(
+                status=status.HTTP_418_IM_A_TEAPOT,
+                data={
+                    "payment_id": payment.id,
+                    "payment_URL": payment.session_url
+                }
+            )
+
         instance = serializer.save(
             user=self.request.user,
         )
 
         create_checkout_session(instance.id, self.request, overdue=False)
-
         send_successful_checkout(self.request.user.id, instance.id)
 
     @action(
