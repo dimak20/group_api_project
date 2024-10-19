@@ -10,19 +10,31 @@ from payments.exceptions import InvalidPeriodError
 from payments.models import Payment, TypeChoices
 
 
-def create_checkout_session(checkout_id: int, request: Request, overdue: bool = False):
+def create_checkout_session(
+        checkout_id: int,
+        request: Request,
+        overdue:
+        bool = False
+) -> tuple[Payment, str] | tuple[None, str]:
     checkout = Checkout.objects.filter(id=checkout_id).first()
     if not checkout:
         return None, "Checkout does not exist"
 
     try:
         billing_period = get_billing_period(checkout, overdue=overdue)
-        return create_stripe_checkout_session(billing_period, checkout, request, overdue=overdue)
+        return create_stripe_checkout_session(
+            billing_period, checkout, request, overdue=overdue
+        )
     except InvalidPeriodError as e:
         return None, str(e)
 
 
-def create_stripe_checkout_session(billing_period, checkout, request, overdue: bool = False):
+def create_stripe_checkout_session(
+    billing_period: int,
+    checkout: Checkout,
+    request: Request,
+    overdue: bool = False
+) -> tuple[Payment, str] | tuple[None, str]:
     total_amount = int(
         (Decimal(billing_period) * checkout.book.daily_fee * Decimal("100")).quantize(
             Decimal("1")
@@ -33,7 +45,6 @@ def create_stripe_checkout_session(billing_period, checkout, request, overdue: b
     if overdue:
         total_amount *= int(settings.OVERDUE_FINE_MULTIPLIER)
         payment_type = TypeChoices.FINE
-
 
     if total_amount <= 0:
         return None, "Invalid amount to pay."
@@ -73,7 +84,7 @@ def create_stripe_checkout_session(billing_period, checkout, request, overdue: b
     return payment, checkout_session.url
 
 
-def get_billing_period(checkout: Checkout, overdue: bool = False):
+def get_billing_period(checkout: Checkout, overdue: bool = False) -> int | tuple[None, str]:
     if overdue:
         borrow_days_of_overdue = (
             checkout.actual_return_date - checkout.expected_return_date
@@ -87,3 +98,33 @@ def get_billing_period(checkout: Checkout, overdue: bool = False):
     if borrow_duration_days < 0:
         raise InvalidPeriodError("Return date cannot be before checkout date.")
     return borrow_duration_days
+
+
+def create_webhook(request: Request) -> str:
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    webhook_url = request.build_absolute_uri(reverse("payments:stripe-webhook"))
+
+    webhook = stripe.WebhookEndpoint.create(
+        enabled_events=["charge.successful", "charge.failed"],
+        url=webhook_url
+    )
+    return webhook.get("secret")
+
+
+def check_webhook_exists(request: Request) -> str:
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    webhook_url = request.build_absolute_uri(reverse("payments:stripe-webhook"))
+    webhook_id = None
+
+    webhooks = stripe.WebhookEndpoint.list().get("data")
+    for webhook in webhooks:
+        if webhook.get("url") == webhook_url:
+            webhook_id = webhook.get("id")
+            break
+
+    if not webhook_id:
+        webhook = stripe.WebhookEndpoint.create(
+            enabled_events=["charge.successful", "charge.failed"],
+            url=webhook_url
+        )
+        return webhook.get("secret")
