@@ -53,17 +53,24 @@ async def main(message):
 
 
 @sync_to_async
-def get_user_by_email(email):
+def get_user_by_email(email: str) -> get_user_model():
     return get_user_model().objects.filter(email=email).first()
 
 
 @sync_to_async
-def create_notification_profile(user, chat_id):
+def create_notification_profile(
+        user: get_user_model(),
+        chat_id: int
+) -> NotificationProfile:
     return NotificationProfile.objects.create(user=user, chat_id=chat_id)
 
 
 @sync_to_async
-def find_notification_profile(user_id, chat_id: int = None, registration: bool = False):
+def find_notification_profile(
+        user_id: int,
+        chat_id: int = None,
+        registration: bool = False
+) -> NotificationProfile | tuple[NotificationProfile | None, bool]:
     if not chat_id and registration:
         return NotificationProfile.objects.filter(user_id=user_id).first()
     else:
@@ -104,6 +111,7 @@ async def process_register_email(message):
             await bot.send_message(message.chat.id, "Done!")
 
         user_states.pop(message.chat.id, None)
+
 
 @bot.message_handler(commands=["unregister"])
 async def start_unregister_email(message):
