@@ -8,7 +8,7 @@ from books.models import Author, Genre, Book
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ["id", "name"]
+        fields = ["id", "name", "description"]
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -64,3 +64,10 @@ class BookListSerializer(BookSerializer):
 class BookRetrieveSerializer(BookSerializer):
     authors = AuthorSerializer(many=True)
     genres = GenreSerializer(many=True)
+
+
+class GenreRetrieveSerializer(GenreSerializer):
+    books = BookListSerializer(many=True, read_only=True)
+
+    class Meta(GenreSerializer.Meta):
+        fields = GenreSerializer.Meta.fields + ["books"]
