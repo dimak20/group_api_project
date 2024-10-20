@@ -63,8 +63,18 @@ def create_notification_profile(user, chat_id):
 
 
 @sync_to_async
-def find_notification_profile(user_id):
-    return NotificationProfile.objects.filter(user_id=user_id).first()
+def find_notification_profile(user_id, chat_id: int = None, registration: bool = False):
+    if not chat_id and registration:
+        return NotificationProfile.objects.filter(user_id=user_id).first()
+    else:
+        profile = NotificationProfile.objects.filter(user_id=user_id).first()
+        if profile:
+            if not profile.chat_id == chat_id:
+                return profile, False
+            else:
+                return profile, True
+
+        return None, False
 
 
 @sync_to_async
@@ -86,14 +96,14 @@ async def process_register_email(message):
     if not user:
         await bot.send_message(message.chat.id, "Please, enter an existing email")
     else:
-        profile = await find_notification_profile(user_id=user.id)
+        profile = await find_notification_profile(user_id=user.id, registration=True)
         if profile:
             await bot.send_message(message.chat.id, "You have already registered!")
         else:
             await create_notification_profile(user=user, chat_id=message.chat.id)
             await bot.send_message(message.chat.id, "Done!")
 
-    user_states.pop(message.chat.id, None)
+        user_states.pop(message.chat.id, None)
 
 @bot.message_handler(commands=["unregister"])
 async def start_unregister_email(message):
@@ -112,19 +122,25 @@ async def unregister_user(message):
             "Please, enter an existing email"
         )
     else:
-        profile = await find_notification_profile(user_id=user.id)
-        if profile:
+        profile, access = await find_notification_profile(user_id=user.id, chat_id=message.chat.id)
+        if profile and access:
             await delete_notification_profile(user_id=user.id)
             await bot.send_message(
                 message.chat.id,
-                "Done!"
+                "Your profile has been successfully deleted!"
             )
-            return
+        elif profile and not access:
+            await bot.send_message(
+                message.chat.id,
+                "This email is not associated with your account."
+            )
         else:
             await bot.send_message(
                 message.chat.id,
-                "Not profile with this email"
+                "No profile with this email"
             )
+
+        user_states.pop(message.chat.id, None)
 
 
 @bot.message_handler()
