@@ -1,11 +1,13 @@
+import datetime
+
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from checkout.models import Checkout
 from books.models import Book
-from django.contrib.auth import get_user_model
-import datetime
+from checkout.models import Checkout
+
 CHECKOUT_URL = "checkouts:checkout-list"
 User = get_user_model()
 
