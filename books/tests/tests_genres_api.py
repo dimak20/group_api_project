@@ -5,8 +5,7 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
 from books.models import Genre
-from books.serializers import GenreSerializer
-
+from books.serializers import GenreSerializer, GenreRetrieveSerializer
 
 GENRES_URL = reverse("catalog:genres-list")
 
@@ -49,7 +48,7 @@ class AuthenticatedGenresApiTest(TestCase):
 
     def test_retrieve_genre_detail(self):
         genre = sample_genre()
-        serializer = GenreSerializer(genre)
+        serializer = GenreRetrieveSerializer(genre)
         url = detail_genre_url(genre.id)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
