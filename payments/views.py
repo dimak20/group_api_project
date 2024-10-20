@@ -11,7 +11,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -35,7 +35,11 @@ WEBHOOK_SECRET = settings.WEBHOOK_SECRET
 FINE_MULTIPLIER = 2
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin
+):
     model = Payment
     queryset = Payment.objects.all()
     filterset_class = PaymentFilter
