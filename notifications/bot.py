@@ -19,6 +19,8 @@ UNREGISTER_EMAIL_STATE = "unregister_email"
 
 @bot.message_handler(commands=["start"])
 async def start(message):
+    photo = open("logos/library_logo.png", "rb")
+
     keyboard = [
         [
             InlineKeyboardButton("Help", callback_data="1"),
@@ -29,7 +31,14 @@ async def start(message):
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await bot.send_message(message.chat.id, "Please, choose:", reply_markup=reply_markup)
+    await bot.send_photo(
+        chat_id=message.chat.id,
+        photo=photo,
+        caption="Welcome! Please, choose:",
+        reply_markup=reply_markup
+    )
+
+    # await bot.send_message(message.chat.id, "Please, choose:", reply_markup=reply_markup)
 
 
 @bot.callback_query_handler(func=lambda call: True)

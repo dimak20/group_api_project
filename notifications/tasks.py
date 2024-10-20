@@ -19,12 +19,21 @@ logger = logging.getLogger(__name__)
 def send_successful_checkout(user_id: int, checkout_id: int):
     borrowing = Checkout.objects.get(id=checkout_id)
     profile = NotificationProfile.objects.filter(user_id=user_id).first()
-    if profile:
+    if profile and not borrowing.book.image:
         async_to_sync(bot.send_message)(
             profile.chat_id,
             f"You have borrowed book {borrowing.book.title}. "
             f"Expected return date: "
             f"{borrowing.expected_return_date.strftime('%Y-%m-%d')}"
+        )
+    else:
+        async_to_sync(bot.send_photo)(
+            profile.chat_id,
+            photo=borrowing.book.image.url,
+            caption=(
+                f"You have borrowed the book '{borrowing.book.title}'.\n"
+                f"Expected return date: {borrowing.expected_return_date.strftime('%Y-%m-%d')}"
+            )
         )
 
 
