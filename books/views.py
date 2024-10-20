@@ -42,7 +42,7 @@ class AuthorViewSet(viewsets.ModelViewSet):
 
 @book_list_create_schema
 class BookViewSet(viewsets.ModelViewSet):
-    queryset = Book.objects.all()
+    queryset = Book.objects.distinct()
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = BookFilter
     ordering_fields = ["title", "year", "authors__last_name"]
