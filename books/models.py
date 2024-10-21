@@ -10,6 +10,7 @@ from rest_framework.exceptions import ValidationError
 class Author(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
+    biography = models.TextField(blank=True, null=True)
 
     def full_name(self):
         return f"{self.last_name} {self.first_name}"
