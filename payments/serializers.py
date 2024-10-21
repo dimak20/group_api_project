@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from checkout.serializers import CheckoutListSerializer, CheckoutDetailSerializer
+from checkout.serializers import CheckoutListSerializer, CheckoutDetailSerializer, CheckoutPaymentSerializer
 from payments.models import Payment
 
 
@@ -12,18 +12,29 @@ class PaymentSerializer(serializers.ModelSerializer):
             "status",
             "payment_type",
             "checkout",
-            "session_url",
+            "short_url",
             "session_id",
             "total_amount",
         ]
 
 
 class PaymentListSerializer(PaymentSerializer):
-    checkout = CheckoutListSerializer()
+    checkout = CheckoutPaymentSerializer()
 
 
 class PaymentDetailSerializer(PaymentSerializer):
-    checkout = CheckoutDetailSerializer()
+    checkout = CheckoutListSerializer()
+    class Meta(PaymentSerializer.Meta):
+        fields = [
+            "id",
+            "status",
+            "payment_type",
+            "checkout",
+            "session_url",
+            "short_url",
+            "session_id",
+            "total_amount",
+        ]
 
 
 class BorrowingIDSerializer(serializers.Serializer):

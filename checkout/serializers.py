@@ -1,5 +1,6 @@
 from django.utils import timezone
 from rest_framework import serializers
+from urllib3 import request
 
 from books.serializers import BookSerializer
 from checkout.models import Checkout
@@ -88,3 +89,24 @@ class CheckoutReturnSerializer(serializers.ModelSerializer):
             "book",
             "payments"
         ]
+
+
+class CheckoutPaymentSerializer(CheckoutListSerializer):
+    class Meta(CheckoutListSerializer.Meta):
+        fields = [
+            "id",
+            "checkout_date",
+            "expected_return_date",
+            "actual_return_date",
+            "book",
+            "user",
+        ]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        request = self.context.get("request")
+        if not request.user.is_staff:
+            representation.pop("user", None)
+
+        return representation

@@ -11,12 +11,13 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from checkout.models import Checkout
 from notifications.tasks import send_success_payment_url
+from payments.filters import PaymentFilter
 from payments.models import Payment, StatusChoices
 from payments.serializers import (
     PaymentListSerializer,
@@ -34,9 +35,15 @@ WEBHOOK_SECRET = settings.WEBHOOK_SECRET
 FINE_MULTIPLIER = 2
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin
+):
     model = Payment
     queryset = Payment.objects.all()
+    filterset_class = PaymentFilter
+
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -51,7 +58,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
         if self.action in ["list", "retrieve"] and not self.request.user.is_staff:
             return queryset.filter(
-                borrowing__user__id=self.request.user
+                checkout__user=self.request.user
             ).select_related()
 
         if self.action in ["list", "retrieve"]:
