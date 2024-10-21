@@ -14,16 +14,21 @@ class GenreSerializer(serializers.ModelSerializer):
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Author
-        fields = ["id", "first_name", "last_name"]
+        fields = ["id", "first_name", "last_name", "biography"]
 
 
-class AuthorListRetrieveSerializer(AuthorSerializer):
+class AuthorListSerializer(AuthorSerializer):
     books = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="title"
     )
 
     class Meta(AuthorSerializer.Meta):
-        fields = AuthorSerializer.Meta.fields + ["books"]
+        fields = ["id", "first_name", "last_name", "books"]
+
+
+class AuthorRetrieveSerializer(AuthorListSerializer):
+    class Meta(AuthorListSerializer.Meta):
+        fields = AuthorListSerializer.Meta.fields + ["biography"]
 
 
 class BookSerializer(serializers.ModelSerializer):

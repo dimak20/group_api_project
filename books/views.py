@@ -8,7 +8,8 @@ from books.serializers import (
     GenreSerializer,
     GenreRetrieveSerializer,
     AuthorSerializer,
-    AuthorListRetrieveSerializer,
+    AuthorListSerializer,
+    AuthorRetrieveSerializer,
     BookSerializer,
     BookListSerializer,
     BookRetrieveSerializer,
@@ -29,8 +30,10 @@ class AuthorViewSet(viewsets.ModelViewSet):
     queryset = Author.objects.all()
 
     def get_serializer_class(self):
-        if self.action in ["list", "retrieve"]:
-            return AuthorListRetrieveSerializer
+        if self.action == "list":
+            return AuthorListSerializer
+        elif self.action == "retrieve":
+            return AuthorRetrieveSerializer
         return AuthorSerializer
 
     def get_queryset(self):

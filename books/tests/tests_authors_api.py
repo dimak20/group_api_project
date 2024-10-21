@@ -5,7 +5,7 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
 from books.models import Author
-from books.serializers import AuthorListRetrieveSerializer
+from books.serializers import AuthorListSerializer, AuthorRetrieveSerializer
 
 
 AUTHORS_URL = reverse("catalog:authors-list")
@@ -43,7 +43,7 @@ class AuthenticatedAuthorsApiTest(TestCase):
 
         response = self.client.get(AUTHORS_URL)
         authors = Author.objects.all()
-        serializer = AuthorListRetrieveSerializer(authors, many=True)
+        serializer = AuthorListSerializer(authors, many=True)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["results"], serializer.data)
 
@@ -53,7 +53,7 @@ class AuthenticatedAuthorsApiTest(TestCase):
         book = sample_book()
         author = sample_author()
         book.authors.add(author)
-        serializer = AuthorListRetrieveSerializer(author)
+        serializer = AuthorRetrieveSerializer(author)
 
         url = detail_author_url(author.id)
         response = self.client.get(url)
