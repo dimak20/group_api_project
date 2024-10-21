@@ -1,0 +1,187 @@
+services:
+  library_service:
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py wait_for_db &&
+            python manage.py makemigrations &&
+            python manage.py migrate &&
+            python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./:/app
+      - my_media:/files/media
+    depends_on:
+      - db
+      - redis
+    networks:
+      - library
+
+  bot:
+    build: .
+    restart: on-failure
+    command: >
+      python manage.py run_bot
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+
+  db:
+    image: postgres:16.0-alpine3.17
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - my_db:$PGDATA
+    networks:
+      - library
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "3333:80"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - library_db_pgadmin_data:/var/lib/pgadmin
+    networks:
+      - library
+
+  redis:
+    image: redis:7.0
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - library
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+    restart: always
+
+  redis-admin:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - library
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081 || exit 1" ]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+
+  celery:
+    build:
+      context: .
+    env_file:
+      - .env
+    command: >
+      sh -c "celery -A group_api_library worker --loglevel=info"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - library
+
+  celery-beat:
+    build:
+      context: .
+    user: my_user
+    command: "celery -A group_api_library beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    restart: on-failure
+    networks:
+      - library
+
+  flower:
+    build:
+      context: .
+    ports:
+      - "5555:5555"
+    command: "celery -A group_api_library flower --address=0.0.0.0"
+    depends_on:
+      - celery
+      - celery-beat
+    env_file:
+      - .env
+    networks:
+      - library
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - library
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - library
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /cgroup:/cgroup:ro
+    restart: unless-stopped
+    networks:
+      - library
+
+
+volumes:
+  my_db:
+  my_media:
+  library_db_pgadmin_data:
+  prometheus_data: { }
+  grafana-data: { }
+
+networks:
+  library:
+    driver: bridge
