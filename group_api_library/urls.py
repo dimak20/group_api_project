@@ -50,5 +50,6 @@ urlpatterns = [
         name="redoc",
     ),
     path("prometheus/", include("django_prometheus.urls")),
+    path("api/v1/handlers/", include("manage_handler.urls", namespace="handlers"))
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

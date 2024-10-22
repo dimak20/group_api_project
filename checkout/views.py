@@ -78,7 +78,7 @@ class CheckoutViewSet(viewsets.ModelViewSet):
         )
 
         create_checkout_session(instance.id, self.request, overdue=False)
-        send_successful_checkout(self.request.user.id, instance.id)
+        send_successful_checkout.delay(self.request.user.id, instance.id)
 
     def create(self, request, *args, **kwargs):
         is_debt, payment = self._has_debt(self.request.user.pk)
