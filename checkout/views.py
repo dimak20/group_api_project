@@ -1,3 +1,4 @@
+import redis
 from django.db import transaction
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -19,6 +20,7 @@ from payments.models import Payment
 from payments.serializers import PaymentListSerializer
 from payments.services import create_checkout_session
 
+redis_client = redis.Redis(host='redis', port=6379, db=0)
 
 class CheckoutViewSet(viewsets.ModelViewSet):
     model = Checkout
@@ -76,9 +78,10 @@ class CheckoutViewSet(viewsets.ModelViewSet):
             user=self.request.user,
             checkout_date=timezone.now()
         )
+        redis_client.publish("bot_channel", "Send_msg")
 
         create_checkout_session(instance.id, self.request, overdue=False)
-        send_successful_checkout.delay(self.request.user.id, instance.id)
+        # send_successful_checkout.delay(self.request.user.id, instance.id)
 
     def create(self, request, *args, **kwargs):
         is_debt, payment = self._has_debt(self.request.user.pk)

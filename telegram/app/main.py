@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from typing import Union
 
 import httpx
+import redis
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from telebot.async_telebot import AsyncTeleBot
@@ -24,6 +25,20 @@ REGISTER_EMAIL_STATE = "register_email"
 
 UNREGISTER_EMAIL_STATE = "unregister_email"
 
+redis_client = redis.Redis(host="redis", port=6379, db=0)
+
+pubsub = redis_client.pubsub()
+pubsub.subscribe("bot_channel")
+
+async def listen():
+    print("Starting to listen for Redis messages...")
+    while True:
+        message = pubsub.get_message()
+        if message and message['type'] == 'message':
+            text = message['data'].decode('utf-8')
+            chat_id = 758342560
+            await bot.send_message(chat_id=chat_id, text=text)
+        await asyncio.sleep(0.1)
 
 @bot.message_handler(commands=["start"])
 async def start(message):
@@ -67,42 +82,6 @@ async def main(message):
         "order to delete your bot notification"
     )
 
-
-# @sync_to_async
-# def get_user_by_email(email: str) -> get_user_model():
-#     return get_user_model().objects.filter(email=email).first()
-#
-#
-# @sync_to_async
-# def create_notification_profile(
-#         user: get_user_model(),
-#         chat_id: int
-# ) -> NotificationProfile:
-#     return NotificationProfile.objects.create(user=user, chat_id=chat_id)
-
-
-# @sync_to_async
-# def find_notification_profile(
-#         user_id: int,
-#         chat_id: int = None,
-#         registration: bool = False
-# ) -> NotificationProfile | tuple[NotificationProfile | None, bool]:
-#     if not chat_id and registration:
-#         return NotificationProfile.objects.filter(user_id=user_id).first()
-#     else:
-#         profile = NotificationProfile.objects.filter(user_id=user_id).first()
-#         if profile:
-#             if not profile.chat_id == chat_id:
-#                 return profile, False
-#             else:
-#                 return profile, True
-#
-#         return None, False
-#
-#
-# @sync_to_async
-# def delete_notification_profile(user_id):
-#     return NotificationProfile.objects.filter(user_id=user_id).delete()
 
 
 @bot.message_handler(commands=["register"])
@@ -210,11 +189,14 @@ async def start_bot():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     bot_task = asyncio.create_task(start_bot())
+    listen_task = asyncio.create_task(listen())
     try:
         yield
     finally:
         bot_task.cancel()
+        listen_task.cancel()
         await bot_task
+        await listen_task
 
 
 app = FastAPI(lifespan=lifespan)
