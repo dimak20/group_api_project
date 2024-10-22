@@ -1,5 +1,7 @@
 import logging
+import os
 
+import httpx
 from asgiref.sync import async_to_sync
 from celery import shared_task
 from django.db.models import F
@@ -15,26 +17,61 @@ from payments.models import Payment
 logger = logging.getLogger(__name__)
 
 
+async def send_message(chat_id, text):
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            f"http://{os.getenv('FAST_API_DOMAIN')}:{os.getenv('FAST_API_PORT')}/send/",
+            json={"chat_id": chat_id, "text": text}
+        )
+
+
 @shared_task
 def send_successful_checkout(user_id: int, checkout_id: int):
+    async def notify_user_no_photo(chat_id: int, text_data: str):
+        async with httpx.AsyncClient() as client:
+            url = f"http://{os.getenv('FAST_API_DOMAIN')}:{os.getenv('FAST_API_PORT')}/send/"
+            data = {"chat_id": chat_id, "text": text_data}
+            response = await client.post(url, json=data)
+            return response
+
+    async def notify_user_photo(chat_id: int, photo_data: dict):
+        async with httpx.AsyncClient() as client:
+            url = f"http://{os.getenv('FAST_API_DOMAIN')}:{os.getenv('FAST_API_PORT')}/send/"
+            data = {
+                "chat_id": chat_id,
+                "photo": {
+                    "photo": photo_data["photo"],
+                    "caption": photo_data.get("caption")
+                }
+            }
+            response = await client.post(url, json=data)
+            return response
+
     borrowing = Checkout.objects.get(id=checkout_id)
     profile = NotificationProfile.objects.filter(user_id=user_id).first()
-    if profile and not borrowing.book.image:
-        async_to_sync(bot.send_message)(
-            profile.chat_id,
-            f"You have borrowed book {borrowing.book.title}. "
-            f"Expected return date: "
-            f"{borrowing.expected_return_date.strftime('%Y-%m-%d')}"
-        )
-    else:
-        async_to_sync(bot.send_photo)(
-            profile.chat_id,
-            photo=borrowing.book.image.url,
-            caption=(
-                f"You have borrowed the book '{borrowing.book.title}'.\n"
-                f"Expected return date: {borrowing.expected_return_date.strftime('%Y-%m-%d')}"
+    if profile:
+        if not borrowing.book.image:
+            text = (
+                f"You have borrowed book {borrowing.book.title}. "
+                f"Expected return date: "
+                f"{borrowing.expected_return_date.strftime('%Y-%m-%d')}"
             )
-        )
+
+            async_to_sync(notify_user_no_photo)(
+                profile.chat_id, text
+            )
+
+        else:
+            photo = dict(
+                photo=borrowing.book.image.url,
+                caption=(
+                    f"You have borrowed the book '{borrowing.book.title}'.\n"
+                    f"Expected return date: {borrowing.expected_return_date.strftime('%Y-%m-%d')}"
+                )
+            )
+            async_to_sync(notify_user_photo)(
+                profile.chat_id, photo
+            )
 
 
 @shared_task
@@ -70,7 +107,7 @@ def send_payment_url(payment_id):
         user = payment.checkout.user
         profile = user.notification_profile
         if profile:
-            async_to_sync(bot.send_message)(
+            async_to_sync(send_message)(
                 profile.chat_id,
                 f"Your payment url: {payment.sesstion_url}"
             )
@@ -100,7 +137,7 @@ def send_success_payment_url(payment_id: int):
         book = Book.objects.filter(id=payment.checkout.book.id).first()
         profile = NotificationProfile.objects.filter(user_id=payment.checkout.user.id).first()
         if profile:
-            async_to_sync(bot.send_message)(
+            async_to_sync(send_message)(
                 profile.chat_id,
                 f"Your payment was successful! \n"
                 f"Book: {book.title}"
@@ -112,7 +149,7 @@ def send_bot_message_with_text(user_id: int, text: str):
     profile = NotificationProfile.objects.filter(user_id=user_id).first()
 
     if profile:
-        async_to_sync(bot.send_message)(
+        async_to_sync(send_message)(
             profile.chat_id,
             text
         )
