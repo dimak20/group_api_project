@@ -1,6 +1,6 @@
 import asyncio
-import pika
-from pika.exceptions import AMQPConnectionError, AuthenticationError
+
+import aio_pika
 
 from .bot_setup import bot
 
@@ -11,56 +11,55 @@ RABBITMQ_USER = 'user'
 RABBITMQ_PASS = 'password'
 
 
-connection = None
-channel = None
+async def connect_to_rabbitmq():
+    return await aio_pika.connect_robust(
+        host=RABBITMQ_HOST,
+        login=RABBITMQ_USER,
+        password=RABBITMQ_PASS,
+        heartbeat=60
+    )
 
 
-def connect_to_rabbitmq():
-    global connection, channel
+async def create_django_db_queue(channel):
+    # Создаем очередь DJANGO_DB с параметром durable=True
+    await channel.declare_queue(DJANGO_DB_QUEUE, durable=True)
+    print(f"Queue created: {DJANGO_DB_QUEUE}")
+
+
+async def send_message(message: str):
     try:
-        credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=RABBITMQ_HOST, credentials=credentials)
-        )
-        channel = connection.channel()
-
-        # Создаем только DJANGO_DB, если ее еще нет
-        channel.queue_declare(queue=DJANGO_DB_QUEUE, durable=True)
-        print("Connected to RabbitMQ")
-
-    except (AMQPConnectionError, AuthenticationError) as e:
-        print("Failed to connect to RabbitMQ:", e)
-
-
-def send_message(message: str):
-    if channel is None or connection is None:
-        connect_to_rabbitmq()
-
-    try:
-        # Отправка сообщения в джанго
-        channel.basic_publish(exchange='', routing_key=DJANGO_DB_QUEUE, body=message)
-        print("Message sent:", message)
-
+        connection = await connect_to_rabbitmq()
+        async with connection:
+            channel = await connection.channel()
+            await create_django_db_queue(channel)  # Создаем очередь DJANGO_DB
+            await channel.default_exchange.publish(
+                aio_pika.Message(body=message.encode()),
+                routing_key='DJANGO_DB'
+            )
+            print("Message sent:", message)
     except Exception as e:
-        print("Failed to send message:", e)
+        print("Error sending message:", e)
 
 
-def callback(ch, method, properties, body):
-    print(f"Received {body.decode()}")
-    asyncio.create_task(bot.send_message(body.decode()))
+async def callback(message: aio_pika.IncomingMessage):
+    async with message.process():
+        print(f"Received: {message.body.decode()}")
+        await bot.send_message(message.body.decode())
 
 
-def start_rabbit_consumer():
-    connect_to_rabbitmq()
-
-    # Подключаемся к уже существующей очереди PAYMENTS
-    channel.basic_consume(queue=PAYMENTS_QUEUE, on_message_callback=callback, auto_ack=True)
-    print('Waiting for messages. To exit press CTRL+C')
-
+async def start_rabbit_consumer():
     try:
-        channel.start_consuming()
-    except KeyboardInterrupt:
-        print("Consumer stopped.")
-    finally:
-        if connection and connection.is_open:
-            connection.close()
+        connection = await connect_to_rabbitmq()
+        async with connection:
+            channel = await connection.channel()
+
+            # Установите QoS, если нужно
+            await channel.set_qos(prefetch_count=1)  # Ограничивает количество необработанных сообщений
+            payments_queue = await channel.declare_queue(PAYMENTS_QUEUE, durable=True)
+
+            # Подписка на очередь PAYMENTS
+            await payments_queue.consume(callback)
+            print("Consumer started, waiting for messages...")
+            await asyncio.Future()  # Ожидание сообщений бесконечно
+    except Exception as e:
+        print("Error in RabbitMQ consumer:", e)

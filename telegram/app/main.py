@@ -169,14 +169,18 @@ async def start_bot():
     await bot.polling(none_stop=True)
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     bot_task = asyncio.create_task(start_bot())
-    rabbit_task = asyncio.to_thread(start_rabbit_consumer)
+    rabbit_task = asyncio.create_task(start_rabbit_consumer())
+
     try:
         yield
     finally:
         bot_task.cancel()
+        rabbit_task.cancel()
+        await bot_task
         await rabbit_task
 
 
