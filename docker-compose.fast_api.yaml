@@ -30,6 +30,7 @@ services:
     command: [ "/entrypoint.sh" ]
     environment:
       - WATCHFILES_FORCE_POLLING=true
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672/
     env_file:
       - ./telegram/.env
     ports:
@@ -81,6 +82,25 @@ services:
       retries: 5
     restart: always
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - library
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "rabbitmqctl status" ]
+      interval: 15s
+      timeout: 15s
+      retries: 5
+
+
   redis-admin:
     image: rediscommander/redis-commander:latest
     ports:
@@ -108,6 +128,7 @@ services:
     depends_on:
       - db
       - redis
+      - rabbitmq
     networks:
       - library
 
@@ -123,6 +144,7 @@ services:
     depends_on:
       - redis
       - db
+      - rabbitmq
     restart: on-failure
     networks:
       - library
@@ -136,10 +158,31 @@ services:
     depends_on:
       - celery
       - celery-beat
+      - rabbitmq
     env_file:
       - .env
     networks:
       - library
+
+  rabbitmq_consumer:
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "sleep 20 && python manage.py consume_queue"
+    depends_on:
+      - rabbitmq
+      - library_service
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - library
+
 
   prometheus:
     image: prom/prometheus:latest
@@ -170,18 +213,18 @@ services:
     networks:
       - library
 
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: cadvisor
-    ports:
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /sys:/sys:ro
-      - /cgroup:/cgroup:ro
-    restart: unless-stopped
-    networks:
-      - library
+#  cadvisor:
+#    image: gcr.io/cadvisor/cadvisor:latest
+#    container_name: cadvisor
+#    ports:
+#      - "8080:8080"
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock:ro
+#      - /sys:/sys:ro
+#      - /cgroup:/cgroup:ro
+#    restart: unless-stopped
+#    networks:
+#      - library
 
 
 volumes:

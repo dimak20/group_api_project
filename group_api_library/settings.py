@@ -55,7 +55,8 @@ INSTALLED_APPS = [
     "management_utils",
     "notifications",
     "payments",
-    "manage_handler"
+    "manage_handler",
+    "rabbit_commander"
 ]
 
 MIDDLEWARE = [
@@ -148,7 +149,7 @@ if USE_REDIS:
             },
         }
     }
-    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "pyamqp://guest:guest@localhost//")
     CELERY_ACCEPT_CONTENT = ["json"]
     CELERY_TASK_SERIALIZER = "json"
     CELERY_RESULT_SERIALIZER = "json"
