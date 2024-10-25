@@ -187,7 +187,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-@app.post("/api/v1.0/notifications")
+@app.post("/api/v1.0/notifications/")
 async def send_user_notification_movie(data):
     movie_name = data.name
     price_drop_percentage = data.price
