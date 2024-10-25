@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -13,6 +14,7 @@ from notifications.bot import bot
 from notifications.email_utils import send_email
 from notifications.models import NotificationProfile
 from payments.models import Payment
+from rabbit_commander.pika_setup import send_message_to_queue
 
 logger = logging.getLogger(__name__)
 
@@ -24,54 +26,83 @@ async def send_message(chat_id, text):
             json={"chat_id": chat_id, "text": text}
         )
 
-
 @shared_task
 def send_successful_checkout(user_id: int, checkout_id: int):
-    async def notify_user_no_photo(chat_id: int, text_data: str):
-        async with httpx.AsyncClient() as client:
-            url = f"http://{os.getenv('FAST_API_DOMAIN')}:{os.getenv('FAST_API_PORT')}/send/"
-            data = {"chat_id": chat_id, "text": text_data}
-            response = await client.post(url, json=data)
-            return response
-
-    async def notify_user_photo(chat_id: int, photo_data: dict):
-        async with httpx.AsyncClient() as client:
-            url = f"http://{os.getenv('FAST_API_DOMAIN')}:{os.getenv('FAST_API_PORT')}/send/"
-            data = {
-                "chat_id": chat_id,
-                "photo": {
-                    "photo": photo_data["photo"],
-                    "caption": photo_data.get("caption")
-                }
-            }
-            response = await client.post(url, json=data)
-            return response
-
     borrowing = Checkout.objects.get(id=checkout_id)
     profile = NotificationProfile.objects.filter(user_id=user_id).first()
     if profile:
         if not borrowing.book.image:
-            text = (
-                f"You have borrowed book {borrowing.book.title}. "
+            message = dict(
+                text=f"You have borrowed book {borrowing.book.title}. "
                 f"Expected return date: "
-                f"{borrowing.expected_return_date.strftime('%Y-%m-%d')}"
+                f"{borrowing.expected_return_date.strftime('%Y-%m-%d')}",
+                chat_id=profile.chat_id
             )
 
-            async_to_sync(notify_user_no_photo)(
-                profile.chat_id, text
-            )
 
         else:
-            photo = dict(
+            message = dict(
                 photo=borrowing.book.image.url,
                 caption=(
                     f"You have borrowed the book '{borrowing.book.title}'.\n"
                     f"Expected return date: {borrowing.expected_return_date.strftime('%Y-%m-%d')}"
-                )
+                ),
+                chat_id=profile.chat_id
             )
-            async_to_sync(notify_user_photo)(
-                profile.chat_id, photo
-            )
+
+        message["target"] = "successful_checkout"
+
+        send_message_to_queue(message=message) # Отправляем словарь, сериализация в json на стороне pika_setup
+
+
+
+# @shared_task
+# def send_successful_checkout(user_id: int, checkout_id: int):
+#     async def notify_user_no_photo(chat_id: int, text_data: str):
+#         async with httpx.AsyncClient() as client:
+#             url = f"http://{os.getenv('FAST_API_DOMAIN')}:{os.getenv('FAST_API_PORT')}/send/"
+#             data = {"chat_id": chat_id, "text": text_data}
+#             response = await client.post(url, json=data)
+#             return response
+#
+#     async def notify_user_photo(chat_id: int, photo_data: dict):
+#         async with httpx.AsyncClient() as client:
+#             url = f"http://{os.getenv('FAST_API_DOMAIN')}:{os.getenv('FAST_API_PORT')}/send/"
+#             data = {
+#                 "chat_id": chat_id,
+#                 "photo": {
+#                     "photo": photo_data["photo"],
+#                     "caption": photo_data.get("caption")
+#                 }
+#             }
+#             response = await client.post(url, json=data)
+#             return response
+#
+#     borrowing = Checkout.objects.get(id=checkout_id)
+#     profile = NotificationProfile.objects.filter(user_id=user_id).first()
+#     if profile:
+#         if not borrowing.book.image:
+#             text = (
+#                 f"You have borrowed book {borrowing.book.title}. "
+#                 f"Expected return date: "
+#                 f"{borrowing.expected_return_date.strftime('%Y-%m-%d')}"
+#             )
+#
+#             async_to_sync(notify_user_no_photo)(
+#                 profile.chat_id, text
+#             )
+#
+#         else:
+#             photo = dict(
+#                 photo=borrowing.book.image.url,
+#                 caption=(
+#                     f"You have borrowed the book '{borrowing.book.title}'.\n"
+#                     f"Expected return date: {borrowing.expected_return_date.strftime('%Y-%m-%d')}"
+#                 )
+#             )
+#             async_to_sync(notify_user_photo)(
+#                 profile.chat_id, photo
+#             )
 
 
 @shared_task

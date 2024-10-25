@@ -2,7 +2,7 @@ import asyncio
 
 import aio_pika
 
-from .bot_setup import bot
+from .queue_handler import process_message
 
 RABBITMQ_HOST = 'rabbitmq'
 PAYMENTS_QUEUE = 'PAYMENTS'
@@ -43,8 +43,7 @@ async def send_message(message: str):
 
 async def callback(message: aio_pika.IncomingMessage):
     async with message.process():
-        print(f"Received: {message.body.decode()}")
-        await bot.send_message(758342560, message.body.decode())
+        await process_message(message)
 
 
 async def start_rabbit_consumer():
