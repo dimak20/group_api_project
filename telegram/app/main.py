@@ -77,12 +77,19 @@ async def start_register_email(message):
 async def process_register_email(message):
     email = message.text
     async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"http://{os.getenv('DJANGO_DOMAIN')}:{os.getenv('DJANGO_PORT')}/api/v1/handlers/get-email/",
-            json={"email": email},
-            headers=headers
+        # response = await client.post(
+        #     f"http://{os.getenv('DJANGO_DOMAIN')}:{os.getenv('DJANGO_PORT')}/api/v1/handlers/get-email/",
+        #     json={"email": email},
+        #     headers=headers
+        # )
+        # user_id = response.json().get("user_id")
+        user_id = await send_message(
+            {
+                "target": "get_user_id",
+                "email": email
+            }
         )
-        user_id = response.json().get("user_id")
+
 
         if not user_id:
             await bot.send_message(message.chat.id, "Please, enter an existing email")

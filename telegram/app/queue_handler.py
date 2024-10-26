@@ -64,3 +64,10 @@ async def process_message(message: aio_pika.IncomingMessage):
 
     except Exception as e:
         logger.error(f"An error occurred while processing message: {e}")
+
+async def process_request_message(data: dict):
+    if data.get("target") == "get_user_id":
+        return data.get("user_id")
+    else:
+        logger.warning("Unknown target: %s", data.get("target"))
+        return None
