@@ -11,5 +11,5 @@ class send_message(APIView):
 
     def get(self, request):
         message = "Hello, RabbitMQ!"
-        send_message_to_queue("PAYMENTS", message)
+        send_message_to_queue(queue_name="PAYMENTS", message=message)
         return JsonResponse({"status": "Message sent"})

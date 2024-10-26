@@ -1,5 +1,5 @@
 .venv
-Dockerfile
+django/Dockerfile
 .idea
 .docker-compose.yaml
-db.sqlite3
+django/db.sqlite3

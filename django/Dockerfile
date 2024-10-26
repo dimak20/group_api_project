@@ -8,7 +8,7 @@ WORKDIR app/
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY . /app
 RUN mkdir -p /files/media
 
 RUN adduser \

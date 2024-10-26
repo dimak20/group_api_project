@@ -1,7 +1,8 @@
 services:
   library_service:
     build:
-      context: .
+      context: ./django
+      dockerfile: Dockerfile
     env_file:
       - .env
     ports:
@@ -13,8 +14,8 @@ services:
             python manage.py migrate &&
             python start_server.py"
     volumes:
-      - ./:/app
-      - my_media:/files/media
+      - ./django:/app
+      - ./django/my_media:/files/media
     depends_on:
 #      - db
       - redis
@@ -122,7 +123,8 @@ services:
 
   celery:
     build:
-      context: .
+      context: ./django
+      dockerfile: Dockerfile
     env_file:
       - .env
     command: >
@@ -136,13 +138,15 @@ services:
 
   celery-beat:
     build:
-      context: .
+      context: ./django
+      dockerfile: Dockerfile
     user: my_user
-    command: "celery -A group_api_library beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    command: >
+      sh -c "celery -A group_api_library beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
     env_file:
       - .env
     volumes:
-      - .:/app
+      - ./django:/app
     depends_on:
       - redis
 #      - db
