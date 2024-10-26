@@ -11,7 +11,8 @@ services:
       sh -c "python manage.py wait_for_db &&
             python manage.py makemigrations &&
             python manage.py migrate &&
-            python manage.py runserver 0.0.0.0:8000"
+            python manage.py collectstatic --noinput &&
+            python start_server.py"
     volumes:
       - ./:/app
       - my_media:/files/media
@@ -37,7 +38,6 @@ services:
       - "8082:8082"
     depends_on:
       - rabbitmq
-      - rabbitmq_consumer
     volumes:
       - ./telegram:/usr/src/fastapi
     networks:
@@ -167,24 +167,24 @@ services:
 #    networks:
 #      - library
 
-  rabbitmq_consumer:
-    build:
-      context: .
-    env_file:
-      - .env
-    volumes:
-      - ./:/app
-    command: >
-      sh -c "sleep 20 && python manage.py consume_queue"
-    depends_on:
-      - rabbitmq
-      - library_service
-    restart: always
-    environment:
-      RABBITMQ_DEFAULT_USER: user
-      RABBITMQ_DEFAULT_PASS: password
-    networks:
-      - library
+#  rabbitmq_consumer:
+#    build:
+#      context: .
+#    env_file:
+#      - .env
+#    volumes:
+#      - ./:/app
+#    command: >
+#      sh -c "sleep 20 && python manage.py consume_queue"
+#    depends_on:
+#      - rabbitmq
+#      - library_service
+#    restart: always
+#    environment:
+#      RABBITMQ_DEFAULT_USER: user
+#      RABBITMQ_DEFAULT_PASS: password
+#    networks:
+#      - library
 
 
 #  prometheus:

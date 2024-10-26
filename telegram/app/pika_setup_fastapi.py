@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 import aio_pika
 
@@ -26,16 +27,18 @@ async def create_django_db_queue(channel):
     print(f"Queue created: {DJANGO_DB_QUEUE}")
 
 
-async def send_message(message: str):
+async def send_message(message):
     try:
-        connection = await connect_to_rabbitmq()
+        connection = await connect_to_rabbitmq() # устанавливаем соединиене с контейнером раббит
+        message_json = json.dumps(message) # сериализуем в строку
+        encoded_message = message_json.encode() # кодируем json-строку
         async with connection:
-            channel = await connection.channel()
+            channel = await connection.channel() # получаем канал
             await create_django_db_queue(channel)  # Создаем очередь DJANGO_DB
             await channel.default_exchange.publish(
-                aio_pika.Message(body=message.encode()),
-                routing_key='DJANGO_DB'
-            )
+                aio_pika.Message(body=encoded_message),
+                routing_key=DJANGO_DB_QUEUE
+            ) # отправляем сообщение
             print("Message sent:", message)
     except Exception as e:
         print("Error sending message:", e)
