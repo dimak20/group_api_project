@@ -2,14 +2,15 @@ import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
 
+import django
 import uvicorn
 
-from rabbit_commander.management.commands.consume_queue import Command
 
 UVICORN_HOST = os.getenv("UVICORN_HOST", "0.0.0.0")
 
 
 async def consume_messages():
+    from rabbit_commander.management.commands.consume_queue import Command
     rabbit_consume_command = Command()
     loop = asyncio.get_running_loop()
     executor = ThreadPoolExecutor(max_workers=1)
@@ -29,6 +30,9 @@ async def run_uvicorn():
 
 
 async def main():
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'group_api_library.settings')
+    django.setup()
+
     consumer_task = asyncio.create_task(consume_messages())
     uvicorn_task = asyncio.create_task(run_uvicorn())
 

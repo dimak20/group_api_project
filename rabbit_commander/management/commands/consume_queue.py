@@ -12,4 +12,4 @@ class Command(BaseCommand):
     help = "Consume messages from RabbitMQ queue"
 
     def handle(self, *args, **kwargs):
-        consume_messages_from_queue(QUEUE_TO_CONSUME)
+        consume_messages_from_queue()

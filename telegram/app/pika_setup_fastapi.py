@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import uuid
 
 import aio_pika
 
@@ -10,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 RABBITMQ_HOST = 'rabbitmq'
 PAYMENTS_QUEUE = 'PAYMENTS'
-DJANGO_DB_QUEUE = 'DJANGO_DB'
-RESPONSE_QUEUE = "RESPONSE_QUEUE"
+DJANGO_DB_QUEUE = 'DJANGO_DB_REQUESTS'
+RESPONSE_QUEUE = "DJANGO_DB_RESPONSES"
 RABBITMQ_USER = 'user'
 RABBITMQ_PASS = 'password'
 
@@ -62,7 +63,7 @@ async def send_message(message):
                 aio_pika.Message(
                     body=encoded_message,
                     reply_to=RESPONSE_QUEUE,
-                    correlation_id='12345'
+                    correlation_id=str(uuid.uuid4())
                 ),
                 routing_key=DJANGO_DB_QUEUE
             )
@@ -90,7 +91,7 @@ async def start_rabbit_consumer():
                 payments_queue = await channel.declare_queue(PAYMENTS_QUEUE, durable=True)
 
                 await payments_queue.consume(callback)
-                logger.info("Consumer started, waiting for messages...")
+                logger.info(f"Consumer {PAYMENTS_QUEUE} started, waiting for messages...")
                 await asyncio.Future()
 
         except (aio_pika.exceptions.AMQPConnectionError, aio_pika.exceptions.ChannelClosed):

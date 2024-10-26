@@ -10,8 +10,8 @@ from rabbit_commander.tasks import process_django_queue_message
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 QUEUE_TO_SEND = os.getenv('QUEUE_TO_SEND', 'PAYMENTS')  # Очередь для отправки в сервис(ы) с уведомлениями
-QUEUE_TO_CONSUME = os.getenv('QUEUE_TO_CONSUME', 'DJANGO_DB')
-QUEUE_TO_RESPOND = os.getenv('QUEUE_TO_RESPOND', 'RESPONSE_QUEUE')
+QUEUE_TO_CONSUME = os.getenv('QUEUE_TO_CONSUME', 'DJANGO_DB_REQUESTS')
+QUEUE_TO_RESPOND = os.getenv('QUEUE_TO_RESPOND', 'DJANGO_DB_RESPONSES')
 
 
 def get_rabbitmq_credentials():
@@ -21,7 +21,7 @@ def get_rabbitmq_credentials():
     return pika.PlainCredentials(user, password)
 
 
-def consume_messages_from_queue(queue_name: str = QUEUE_TO_CONSUME):
+def consume_messages_from_queue():
     """Consume messages from the specified RabbitMQ queue."""
     logger.info(f"Starting consumer for queue: {QUEUE_TO_CONSUME}")
     credentials = get_rabbitmq_credentials()
@@ -64,7 +64,7 @@ def consume_messages_from_queue(queue_name: str = QUEUE_TO_CONSUME):
                 logger.info(f"Response from processing: {response_result}")
 
                 # Отправляем ответ обратно в очередь
-                send_message_to_queue(response_result, QUEUE_TO_RESPOND)
+                send_message_to_queue(response_result, QUEUE_TO_RESPOND, properties.correlation_id)
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
             except Exception as e:
@@ -79,10 +79,10 @@ def consume_messages_from_queue(queue_name: str = QUEUE_TO_CONSUME):
     finally:
         if 'connection' in locals() and connection.is_open:
             connection.close()
-        logger.info(f"Consumer for queue {queue_name} stopped")
+        logger.info(f"Consumer for queue {QUEUE_TO_CONSUME} stopped")
 
 
-def send_message_to_queue(message: dict, queue_name: str = QUEUE_TO_SEND):
+def send_message_to_queue(message: dict, queue_name: str = QUEUE_TO_SEND, correlation_id: str = None):
     """Send a message to the specified RabbitMQ queue."""
     credentials = get_rabbitmq_credentials()
     connection_params = pika.ConnectionParameters(
@@ -107,9 +107,10 @@ def send_message_to_queue(message: dict, queue_name: str = QUEUE_TO_SEND):
                 body=message,
                 properties=pika.BasicProperties(
                     delivery_mode=2,  # Указывает, что сообщение будет сохранено
+                    correlation_id=correlation_id
                 ),
             )
-            logger.info(f"Sent message to queue: {queue_name} | Message: {message}")
+            logger.info(f"Sent message to queue: {queue_name} | Message: {message} | Correlation_id: {correlation_id}")
     except pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Failed to connect to RabbitMQ: {e}")
     except Exception as e:

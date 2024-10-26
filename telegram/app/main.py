@@ -7,7 +7,6 @@ from typing import Union
 import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from telebot.async_telebot import AsyncTeleBot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from .bot_setup import bot
@@ -76,36 +75,23 @@ async def start_register_email(message):
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id) == REGISTER_EMAIL_STATE)
 async def process_register_email(message):
     email = message.text
-    async with httpx.AsyncClient() as client:
-        # response = await client.post(
-        #     f"http://{os.getenv('DJANGO_DOMAIN')}:{os.getenv('DJANGO_PORT')}/api/v1/handlers/get-email/",
-        #     json={"email": email},
-        #     headers=headers
-        # )
-        # user_id = response.json().get("user_id")
-        user_id = await send_message(
-            {
-                "target": "get_user_id",
-                "email": email
-            }
-        )
+    response = await send_message(
+        {
+            "target": "get_user_id",
+            "email": email,
+            "chat_id": message.chat.id
+        }
+    )
 
-
-        if not user_id:
-            await bot.send_message(message.chat.id, "Please, enter an existing email")
+    if not response.get("user_id"):
+        await bot.send_message(message.chat.id, "Please, enter an existing email")
+    else:
+        if response.get("created"):
+            await bot.send_message(message.chat.id, "You have successfully registered!")
         else:
-            response = await client.post(
-                f"http://{os.getenv('DJANGO_DOMAIN')}:{os.getenv('DJANGO_PORT')}/api/v1/handlers/find-create-profile/",
-                json={"user_id": user_id, "chat_id": message.chat.id},
-                headers=headers
-            )
-            created = response.json().get("created")
-            if created:
-                await bot.send_message(message.chat.id, "You have successfully registered!")
-            else:
-                await bot.send_message(message.chat.id, f"You have already registered")
+            await bot.send_message(message.chat.id, f"You have already registered")
 
-            user_states.pop(message.chat.id, None)
+        user_states.pop(message.chat.id, None)
 
 
 @bot.message_handler(commands=["unregister"])
@@ -117,44 +103,40 @@ async def start_unregister_email(message):
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id) == UNREGISTER_EMAIL_STATE)
 async def unregister_user(message):
     email = message.text
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"http://{os.getenv('DJANGO_DOMAIN')}:{os.getenv('DJANGO_PORT')}/api/v1/handlers/get-email/",
-            json={"email": email},
-            headers=headers
-        )
-        user_id = response.json().get("user_id")
+    response = await send_message(
+        {
+            "target": "unregister_user_by_email",
+            "email": email,
+            "chat_id": message.chat.id
+        }
+    )
+    user_id = response.get("user_id")
 
-        if not user_id:
+    if not user_id:
+        await bot.send_message(
+            message.chat.id,
+            "Please, enter an existing email"
+        )
+    else:
+        profile = response.get("profile")
+        access = response.get("access")
+        if profile and access:
             await bot.send_message(
                 message.chat.id,
-                "Please, enter an existing email"
+                "Your profile has been successfully deleted!"
+            )
+        elif profile and not access:
+            await bot.send_message(
+                message.chat.id,
+                "This email is not associated with your account."
             )
         else:
-            response = await client.post(
-                f"http://{os.getenv('DJANGO_DOMAIN')}:{os.getenv('DJANGO_PORT')}/api/v1/handlers/find-delete-profile/",
-                json={"user_id": user_id, "chat_id": message.chat.id},
-                headers=headers
+            await bot.send_message(
+                message.chat.id,
+                "No profile with this email"
             )
-            profile = response.json().get("profile")
-            access = response.json().get("access")
-            if profile and access:
-                await bot.send_message(
-                    message.chat.id,
-                    "Your profile has been successfully deleted!"
-                )
-            elif profile and not access:
-                await bot.send_message(
-                    message.chat.id,
-                    "This email is not associated with your account."
-                )
-            else:
-                await bot.send_message(
-                    message.chat.id,
-                    "No profile with this email"
-                )
 
-            user_states.pop(message.chat.id, None)
+        user_states.pop(message.chat.id, None)
 
 
 @bot.message_handler()
@@ -174,7 +156,6 @@ async def info(message):
 
 async def start_bot():
     await bot.polling(none_stop=True)
-
 
 
 @asynccontextmanager
@@ -240,8 +221,10 @@ async def bot_send_message_console(chat_id: int, text: str):
         text=text
     )
 
+
 class Message(BaseModel):
     message: str
+
 
 @app.post("/send-rabbit/")
 async def send_to_queue(data: Message):
