@@ -31,7 +31,6 @@ services:
     command: [ "/entrypoint.sh" ]
     environment:
       - WATCHFILES_FORCE_POLLING=true
-      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672/
     env_file:
       - ./telegram/.env
     ports:

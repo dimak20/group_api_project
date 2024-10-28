@@ -24,7 +24,7 @@ async def consume_messages():
 
 
 async def run_uvicorn():
-    config = uvicorn.Config("group_api_library.asgi:application", host="0.0.0.0", port=8000, reload=True)
+    config = uvicorn.Config("group_api_library.asgi:application", host=UVICORN_HOST, port=8000, reload=True)
     server = uvicorn.Server(config)
     await server.serve()
 
