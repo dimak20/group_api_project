@@ -2,7 +2,7 @@ from django.conf import settings
 from sendgrid.helpers.mail import Mail
 
 
-def send_email(subject, message, to_email):
+def send_email(subject: str, message: str, to_email: str):
     message = Mail(
         from_email=settings.DEFAULT_FROM_EMAIL,
         to_emails=to_email,
