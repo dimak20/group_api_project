@@ -64,7 +64,7 @@ def send_outdated_checkouts():
 
 
 @shared_task
-def send_payment_url(payment_id):
+def send_payment_url(payment_id: int):
     payment = Payment.objects.filter(id=payment_id).first()
     if payment:
         user = payment.checkout.user
