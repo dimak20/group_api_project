@@ -3,3 +3,5 @@ Dockerfile
 .idea
 .docker-compose.yaml
 db.sqlite3
+notifications/views.py
+notifications/tests.py
