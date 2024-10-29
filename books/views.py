@@ -1,5 +1,8 @@
+from typing import Type
+
+from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import viewsets, serializers
 from rest_framework.filters import OrderingFilter
 
 from books.filters import BookFilter
@@ -20,7 +23,7 @@ from books.schemas.books_filtering_ordering import book_list_create_schema
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[serializers.Serializer]:
         if self.action == "retrieve":
             return GenreRetrieveSerializer
         return GenreSerializer
@@ -29,15 +32,15 @@ class GenreViewSet(viewsets.ModelViewSet):
 class AuthorViewSet(viewsets.ModelViewSet):
     queryset = Author.objects.all()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[serializers.Serializer]:
         if self.action == "list":
             return AuthorListSerializer
         elif self.action == "retrieve":
             return AuthorRetrieveSerializer
         return AuthorSerializer
 
-    def get_queryset(self):
-        queryset = self.queryset
+    def get_queryset(self) -> QuerySet[Author]:
+        queryset = super().get_queryset()
         if self.action in ["list", "retrieve"]:
             queryset = queryset.prefetch_related("books")
         return queryset
@@ -51,7 +54,7 @@ class BookViewSet(viewsets.ModelViewSet):
     ordering_fields = ["title", "year", "authors__last_name"]
     ordering = ["title"]
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[serializers.Serializer]:
         if self.action == "list":
             return BookListSerializer
         elif self.action == "retrieve":

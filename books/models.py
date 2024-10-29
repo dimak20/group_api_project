@@ -12,10 +12,10 @@ class Author(models.Model):
     last_name = models.CharField(max_length=50)
     biography = models.TextField(blank=True, null=True)
 
-    def full_name(self):
+    def full_name(self) -> str:
         return f"{self.last_name} {self.first_name}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.full_name()
 
     class Meta:
@@ -26,7 +26,7 @@ class Genre(models.Model):
     name = models.CharField(max_length=50)
     description = models.TextField(null=True, blank=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     class Meta:
@@ -54,31 +54,21 @@ class Book(models.Model):
         upload_to=book_image_file_path, null=True, blank=True
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.title} ({self.year})"
 
     class Meta:
         ordering = ["id", "title", "year"]
 
     @staticmethod
-    def validate_year(year: int):
+    def validate_year(year: int) -> None:
         current_year = datetime.now().year
         if year and (year < 1000 or year > current_year):
             raise ValidationError(f"Year must be in: 1000 - {current_year}")
 
-    def clean(self):
+    def clean(self) -> None:
         Book.validate_year(self.year)
 
-    def save(
-            self,
-            *args,
-            force_insert=False,
-            force_update=False,
-            using=None,
-            update_fields=None,
-    ):
+    def save(self, *args, **kwargs) -> "Book":
         self.full_clean()
-        return super(Book, self).save(
-            force_insert, force_update, using, update_fields
-        )
-
+        return super().save(*args, **kwargs)
