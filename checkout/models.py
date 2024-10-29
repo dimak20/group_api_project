@@ -30,13 +30,12 @@ class Checkout(models.Model):
         )
 
     @staticmethod
-    def validate_book(book: Book, error_to_response) -> None:
+    def validate_book(book: Book, error_to_response: type) -> None:
         if book.inventory < 1:
             raise error_to_response(
                 {
-                    "book inventory": "No available copies of "
-                                      "this title at the moment. Please choose another book."
-
+                    "book inventory": """No available copies of 
+                    this title at the moment. Please choose another book."""
                 }
             )
 
@@ -55,7 +54,7 @@ class Checkout(models.Model):
                 }
             )
 
-    def clean(self):
+    def clean(self) -> None:
         self.validate_book(self.book, ValueError)
         self.validate_return_date(
             self.checkout_date,

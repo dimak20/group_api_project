@@ -1,6 +1,5 @@
 from django.utils import timezone
 from rest_framework import serializers
-from urllib3 import request
 
 from books.serializers import BookSerializer
 from checkout.models import Checkout
@@ -8,7 +7,7 @@ from user.serializers import UserSerializer
 
 
 class CheckoutSerializer(serializers.ModelSerializer):
-    payments = serializers.StringRelatedField(many=True, read_only=True)
+    payments = serializers.StringRelatedField(many=False, read_only=True)
 
     def validate(self, attrs):
 
@@ -40,12 +39,16 @@ class CheckoutSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if (
                 "expected_return_date" in validated_data
-                and validated_data
-        ["expected_return_date"] != instance.expected_return_date
+                and validated_data["expected_return_date"]
+                != instance.expected_return_date
         ):
             raise serializers.ValidationError(
-                {"expected_return_date":
-                     "You cannot change this field after checkout."}
+                {
+                    "expected_return_date": (
+                        """You cannot change this field after 
+                        checkout."""
+                    )
+                }
             )
         return super().update(instance, validated_data)
 

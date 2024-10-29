@@ -1,6 +1,7 @@
 import django_filters
-from checkout.models import Checkout
 from django.contrib.auth import get_user_model
+
+from checkout.models import Checkout
 
 
 User = get_user_model()
