@@ -85,13 +85,7 @@ class CreateCheckoutSessionView(APIView):
         try:
             borrowing = Checkout.objects.get(id=borrowing_id)
             borrow_duration_days = 3
-            money_to_pay = int(
-                (
-                        Decimal(borrow_duration_days)
-                        * borrowing.book.daily_fee
-                        * Decimal("100")
-                ).quantize(Decimal("1"))
-            )
+            total_amount = Decimal(borrow_duration_days) * borrowing.book.daily_fee
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
                 line_items=[
@@ -101,7 +95,7 @@ class CreateCheckoutSessionView(APIView):
                             "product_data": {
                                 "name": borrowing.book.title,
                             },
-                            "unit_amount": money_to_pay,
+                            "unit_amount": int(total_amount * 100),
                         },
                         "quantity": 1,
                     }
@@ -116,7 +110,7 @@ class CreateCheckoutSessionView(APIView):
                 checkout=borrowing,
                 session_url=checkout_session.url,
                 session_id=checkout_session.id,
-                total_amount=money_to_pay,
+                total_amount=total_amount,
             )
             serializer = PaymentSerializer(payment)
 
