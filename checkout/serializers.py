@@ -40,19 +40,20 @@ class CheckoutSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if (
                 "expected_return_date" in validated_data
-                and validated_data
-        ["expected_return_date"] != instance.expected_return_date
+                and validated_data["expected_return_date"] != instance.expected_return_date
         ):
             raise serializers.ValidationError(
-                {"expected_return_date":
-                     "You cannot change this field after checkout."}
+                {
+                    "expected_return_date":
+                    "You cannot change this field after checkout."
+                }
             )
         return super().update(instance, validated_data)
 
 
 class CheckoutListSerializer(serializers.ModelSerializer):
-    book = serializers.StringRelatedField(many=False)
-    user = serializers.StringRelatedField(many=False)
+    book = serializers.StringRelatedField()
+    user = serializers.StringRelatedField()
     payments = serializers.StringRelatedField(many=True)
 
     class Meta:
@@ -69,11 +70,12 @@ class CheckoutListSerializer(serializers.ModelSerializer):
 
 
 class CheckoutDetailSerializer(CheckoutListSerializer):
-    book = BookSerializer(many=False, read_only=True)
-    user = UserSerializer(many=False, read_only=True)
+    book = BookSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     payments = serializers.SerializerMethodField()
 
-    def get_payments(self, obj):
+    @staticmethod
+    def get_payments(obj):
         from payments.serializers import PaymentSerializer
         return PaymentSerializer(obj.payments.all(), many=True).data
 
