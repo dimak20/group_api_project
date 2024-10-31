@@ -42,16 +42,16 @@ class Checkout(models.Model):
 
     @staticmethod
     def validate_return_date(
-            checkout_date,
-            expected_return_date,
-            error_to_response
+        checkout_date,
+        expected_return_date,
+        error_to_response
     ) -> None:
 
         if expected_return_date <= checkout_date:
             raise error_to_response(
                 {
-                    "return date": "The return date must be at "
-                                   "least one day after the current date"
+                    "return date":
+                    "The return date must be at least one day after the current date"
                 }
             )
 
@@ -73,6 +73,5 @@ class Checkout(models.Model):
     ):
         self.full_clean()
         return (
-            super(Checkout, self).save
-            (force_insert, force_update, using, update_fields)
+            super(Checkout, self).save(force_insert, force_update, using, update_fields)
         )
