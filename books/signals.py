@@ -5,7 +5,7 @@ from books.models import Book
 
 
 @receiver(pre_delete, sender=Book)
-def delete_image(sender, instance, **kwargs):
-    if instance.image:  # Check if an image is associated
-        if os.path.isfile(instance.image.path):  # Check if the file exists
-            os.remove(instance.image.path)  # Delete the file
+def delete_image(sender, instance, **kwargs) -> None:
+    if instance.image:
+        if os.path.isfile(instance.image.path):
+            os.remove(instance.image.path)

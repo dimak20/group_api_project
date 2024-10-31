@@ -61,7 +61,7 @@ class BookListSerializer(BookSerializer):
         fields = ["id", "title", "year", "authors", "genres", "image"]
 
     @extend_schema_field(OpenApiTypes.STR)
-    def get_authors(self, obj):
+    def get_authors(self, obj) -> list[str]:
         authors = obj.authors.all()
         return [f"{author}" for author in authors]
 
