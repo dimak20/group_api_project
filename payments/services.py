@@ -35,15 +35,11 @@ def create_stripe_checkout_session(
     request: Request,
     overdue: bool = False
 ) -> tuple[Payment, str] | tuple[None, str]:
-    total_amount = int(
-        (Decimal(billing_period) * checkout.book.daily_fee * Decimal("100")).quantize(
-            Decimal("1")
-        )
-    )
+    total_amount = Decimal(billing_period) * checkout.book.daily_fee
     payment_type = TypeChoices.PAYMENT
 
     if overdue:
-        total_amount *= int(settings.OVERDUE_FINE_MULTIPLIER)
+        total_amount *= Decimal(settings.OVERDUE_FINE_MULTIPLIER)
         payment_type = TypeChoices.FINE
 
     if total_amount <= 0:
@@ -63,7 +59,7 @@ def create_stripe_checkout_session(
                     "product_data": {
                         "name": checkout.book.title,
                     },
-                    "unit_amount": total_amount,
+                    "unit_amount": int(total_amount * 100),
                 },
                 "quantity": 1,
             }

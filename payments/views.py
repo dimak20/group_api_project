@@ -85,13 +85,7 @@ class CreateCheckoutSessionView(APIView):
         try:
             borrowing = Checkout.objects.get(id=borrowing_id)
             borrow_duration_days = 3
-            money_to_pay = int(
-                (
-                        Decimal(borrow_duration_days)
-                        * borrowing.book.daily_fee
-                        * Decimal("100")
-                ).quantize(Decimal("1"))
-            )
+            total_amount = Decimal(borrow_duration_days) * borrowing.book.daily_fee
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
                 line_items=[
@@ -101,14 +95,14 @@ class CreateCheckoutSessionView(APIView):
                             "product_data": {
                                 "name": borrowing.book.title,
                             },
-                            "unit_amount": money_to_pay,
+                            "unit_amount": int(total_amount * 100),
                         },
                         "quantity": 1,
                     }
                 ],
                 mode="payment",
                 success_url=DOMAIN + "/api/v1/payments/success/?session_id={CHECKOUT_SESSION_ID}",
-                cancel_url=DOMAIN + "/apu/v1/payments/cancel/",
+                cancel_url=DOMAIN + "/api/v1/payments/cancel/",
             )
             payment = Payment.objects.create(
                 status="pending",
@@ -116,7 +110,7 @@ class CreateCheckoutSessionView(APIView):
                 checkout=borrowing,
                 session_url=checkout_session.url,
                 session_id=checkout_session.id,
-                total_amount=money_to_pay,
+                total_amount=total_amount,
             )
             serializer = PaymentSerializer(payment)
 
@@ -148,14 +142,25 @@ class SuccessPaymentView(APIView):
         if not session_id:
             return Response("Stripe has failed to provide session id.", status=400)
 
-        session = stripe.checkout.Session.retrieve(session_id)
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+        except stripe.error.InvalidRequestError:
+            return Response("Invalid session id provided.", status=400)
+        except stripe.error.APIConnectionError:
+            return Response("Failed to connect to Stripe API.", status=502)
+        except Exception as e:
+            return Response(f"An error occurred: {e}", status=500)
+
 
         if session.payment_status == "paid":
             payment = get_object_or_404(Payment, session_id=session_id)
             payment.status = StatusChoices.PAID
             payment.save()
 
-            send_success_payment_url(payment_id=payment.id)
+            try:
+                send_success_payment_url(payment_id=payment.id)
+            except Exception as e:
+                return Response(f"An error occurred: {e}", status=500)
 
             return Response("Your payment was successful!", status=status.HTTP_200_OK)
 

@@ -19,8 +19,6 @@ UNREGISTER_EMAIL_STATE = "unregister_email"
 
 @bot.message_handler(commands=["start"])
 async def start(message):
-    photo = open("logos/library_logo.png", "rb")
-
     keyboard = [
         [
             InlineKeyboardButton("Help", callback_data="1"),
@@ -31,14 +29,13 @@ async def start(message):
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await bot.send_photo(
-        chat_id=message.chat.id,
-        photo=photo,
-        caption="Welcome! Please, choose:",
-        reply_markup=reply_markup
-    )
-
-    # await bot.send_message(message.chat.id, "Please, choose:", reply_markup=reply_markup)
+    with open("logos/library_logo.png", "rb") as photo:
+        await bot.send_photo(
+            chat_id=message.chat.id,
+            photo=photo,
+            caption="Welcome! Please, choose:",
+            reply_markup=reply_markup
+        )
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -94,7 +91,7 @@ def find_notification_profile(
 
 
 @sync_to_async
-def delete_notification_profile(user_id):
+def delete_notification_profile(user_id: int):
     return NotificationProfile.objects.filter(user_id=user_id).delete()
 
 
@@ -104,7 +101,9 @@ async def start_register_email(message):
     await bot.send_message(message.chat.id, "Enter your email:")
 
 
-@bot.message_handler(func=lambda message: user_states.get(message.chat.id) == REGISTER_EMAIL_STATE)
+@bot.message_handler(
+    func=lambda message: user_states.get(message.chat.id) == REGISTER_EMAIL_STATE
+)
 async def process_register_email(message):
     email = message.text
     user = await get_user_by_email(email)
@@ -128,7 +127,9 @@ async def start_unregister_email(message):
     await bot.send_message(message.chat.id, "Enter your email:")
 
 
-@bot.message_handler(func=lambda message: user_states.get(message.chat.id) == UNREGISTER_EMAIL_STATE)
+@bot.message_handler(
+    func=lambda message: user_states.get(message.chat.id) == UNREGISTER_EMAIL_STATE
+)
 async def unregister_user(message):
     email = message.text
 
