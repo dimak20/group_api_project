@@ -74,7 +74,7 @@ def get_create_profile(user_id: int, chat_id: int):
             # Используем defaults для chat_id, чтобы применить его только при создании
             profile, created = NotificationProfile.objects.get_or_create(
                 user_id=user_id,
-                defaults={'chat_id': chat_id}
+                defaults={"chat_id": chat_id}
             )
         return profile, created
     except IntegrityError:
