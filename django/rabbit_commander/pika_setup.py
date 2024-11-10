@@ -61,10 +61,13 @@ def consume_messages_from_queue():
                 response_message = process_django_queue_message.delay(message)
                 response_result = response_message.get(timeout=10)  # ожидание результата
                 logger.info(f"Processing message: {message}")
-                logger.info(f"Response from processing: {response_result}")
+                logger.info(
+                    f"Response from processing: {response_result}. "
+                    f"Sending to {properties.reply_to}"
+                )
 
                 # Отправляем ответ обратно в очередь
-                send_message_to_queue(response_result, QUEUE_TO_RESPOND, properties.correlation_id)
+                send_message_to_queue(response_result, properties.reply_to, properties.correlation_id)
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
             except Exception as e:
