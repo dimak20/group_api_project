@@ -144,7 +144,7 @@ else:
 
 MEDIA_URL = "/media/"
 
-USE_REDIS = False
+USE_REDIS = os.environ.get("USE_REDIS", "false") == "true"
 
 if USE_REDIS:
     CACHES = {
