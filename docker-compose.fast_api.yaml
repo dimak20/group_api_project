@@ -34,7 +34,7 @@ services:
     env_file:
       - ./telegram/.env
     ports:
-      - "8082:8082"
+      - "${FAST_API_PORT}:${FAST_API_PORT}"
     depends_on:
       - rabbitmq
     volumes:
