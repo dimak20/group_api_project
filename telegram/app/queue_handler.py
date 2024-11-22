@@ -26,14 +26,14 @@ async def send_successful_checkout_through_bot(data: dict):
     chat_id = data.get("chat_id")
     if not chat_id:
         logger.error("chat_id is missing in the message data")
-        return  # Если нет id и это словарь, сообщение не приходит админу
+        return  # If there is no id and this is a dictionary, the message does not arrive to the admin
 
     if data.get("photo"):
         try:
             await bot.send_photo(
                 chat_id=chat_id,
                 photo=data.get("photo"),
-                caption=data.get("caption", "")  # Значение по умолчанию
+                caption=data.get("caption", "")  # Default value
             )
         except Exception as e:
             logger.error(f"Failed to send photo: {e}")
@@ -41,7 +41,7 @@ async def send_successful_checkout_through_bot(data: dict):
         try:
             await bot.send_message(
                 chat_id=chat_id,
-                text=data.get("text", "")  # Значение по умолчанию
+                text=data.get("text", "")  # Default value
             )
         except Exception as e:
             logger.error(f"Failed to send message: {e}")
@@ -49,15 +49,15 @@ async def send_successful_checkout_through_bot(data: dict):
 
 async def process_message(message: aio_pika.IncomingMessage):
     try:
-        # Декодируем тело сообщения и пытаемся загрузить его как JSON
+        # Decode the message body and try to download it as JSON
         data = json.loads(message.body.decode())
         logger.info(f"Received JSON message: {data}")
 
-        # Если это словарь, то отправляем его в обработчик чтобы узнать цель
+        # If this is a dictionary, then we send it to the handler to find out the target
         await process_message_target(data)
 
     except json.JSONDecodeError:
-        # Если это не JSON, обрабатываем его как обычную строку
+        # If it's not JSON, treat it like a regular string
         text_message = message.body.decode()
         logger.warning(f"Received non-JSON message: {text_message}")
         await bot.send_message(ADMIN_CHAT_ID, text_message)

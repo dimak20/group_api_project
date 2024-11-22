@@ -143,11 +143,11 @@ async def unregister_user(message):
 async def info(message):
     if message.text.lower() == "hi":
         await bot.send_message(message.chat.id, f"Hi, {message.from_user.first_name}")
-    if message.text.lower() == "незламний":
+    if message.text.lower() == "test":
         async with httpx.AsyncClient() as client:
             result = await client.post(
                 f"http://{os.getenv('DJANGO_DOMAIN')}:{os.getenv('DJANGO_PORT')}/api/v1/handlers/test/",
-                json={"aaa": "Незламний"},
+                json={"aaa": "test_request"},
                 headers=headers
             )
             result_data = result.json()

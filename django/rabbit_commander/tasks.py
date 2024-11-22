@@ -71,14 +71,14 @@ def get_user_id_from_bot(data: dict):
 def get_create_profile(user_id: int, chat_id: int):
     try:
         with transaction.atomic():
-            # Используем defaults для chat_id, чтобы применить его только при создании
+            # Use defaults for chat_id to apply it only when creating
             profile, created = NotificationProfile.objects.get_or_create(
                 user_id=user_id,
                 defaults={"chat_id": chat_id}
             )
         return profile, created
     except IntegrityError:
-        # Если запись уже существует из-за гонки, просто получаем её
+        # If the entry already exists due to a race, we simply get it
         return NotificationProfile.objects.get(user_id=user_id), False
 
 
